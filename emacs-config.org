@@ -1,6 +1,6 @@
-* Configuration File for Emacs
+* Emacs Configuration
 
-I am starting again a configuration file, hoping that this time it grows in a better way, and trying to solve problems immediately, maybe helped by IA.
+This file documents my Emacs configuration. My goal is to keep it maintainable and extensible, addressing problems as they arise, sometimes with the help of AI.
 
 ** Personal Settings
 
@@ -8,10 +8,10 @@ I am starting again a configuration file, hoping that this time it grows in a be
 ;; -*- lexical-binding: t; -*-
 (if (file-exists-p
      (expand-file-name "personal.org" user-emacs-directory))
-     (org-babel-load-file  (expand-file-name "personal.org" user-emacs-directory)))
+    (org-babel-load-file (expand-file-name "personal.org" user-emacs-directory)))
 #+end_src
 
-** Emacs General Settings
+** General Emacs Settings
 
 #+begin_src emacs-lisp
 (use-package emacs
@@ -32,10 +32,7 @@ I am starting again a configuration file, hoping that this time it grows in a be
   :init
   (global-visual-line-mode)
   (recentf-mode)
-  ;; From: sandipchitale@yahoo.com (Sandip Chitale)
-  ;; Newsgroups: gnu.emacs.sources
-  ;; Subject: CODE: Duplicate line or region backward or forward
-  ;; Date: 7 Feb 2004 12:15:35 -0800
+  ;; Duplicate line functions adapted from Sandip Chitale (gnu.emacs.sources, 2004)
   (defun duplicate-line-backward ()
     "Duplicate the current line backward."
     (interactive "*")
@@ -43,8 +40,8 @@ I am starting again a configuration file, hoping that this time it grows in a be
       (let ((contents (buffer-substring
                        (line-beginning-position)
                        (line-end-position))))
-	(beginning-of-line)
-	(insert contents ?\n)))
+        (beginning-of-line)
+        (insert contents ?\n)))
     (previous-line 1))
   (defun duplicate-line-forward ()
     "Duplicate the current line forward."
@@ -53,8 +50,8 @@ I am starting again a configuration file, hoping that this time it grows in a be
       (let ((contents (buffer-substring
                        (line-beginning-position)
                        (line-end-position))))
-	(end-of-line)
-	(insert ?\n contents)))
+        (end-of-line)
+        (insert ?\n contents)))
     (next-line 1))
   :config
   (when (boundp 'ido-mode)
@@ -64,7 +61,8 @@ I am starting again a configuration file, hoping that this time it grows in a be
 
 ** Fonts and Appearance
 
-Mix fixed-pitch and variable-pitch fonts in Emacs, for a more pleasant reading and writing experience in text buffers. This is a minor mode. See https://gitlab.com/jabranham/mixed-pitch
+Enable =mixed-pitch-mode= in text buffers to combine fixed-pitch and variable-pitch fonts for improved readability.
+See [[https://gitlab.com/jabranham/mixed-pitch][mixed-pitch on GitLab]].
 
 #+begin_src emacs-lisp
 (use-package mixed-pitch
@@ -77,15 +75,11 @@ Mix fixed-pitch and variable-pitch fonts in Emacs, for a more pleasant reading a
 
 *** cdlatex
 
-https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex/
+CDLaTeX is a minor mode for fast insertion of environment templates and math in LaTeX and Org buffers.
+See [[https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex/][cdlatex homepage]].
 
-#+begin_quote
-CDLaTeX is a minor mode for Emacs supporting fast insertion of environment templates and math stuff in LaTeX. Similar commands are also offered as part of the AUCTeX package, but it is not the same - CDLaTeX focuses on speediness for inserting LaTeX constructs. I myself am using CDLaTeX on top of AUCTeX.
-#+end_quote
-
-The settings in =cdlatex-math-symbol-alist= are useful also when writing math in org-mode.
-
-It was needed to customize =cdlatex-takeover-parenthesis=, see [[https://github.com/cdominik/cdlatex/issues/15#issuecomment-864529972][this issue]].
+The custom settings in =cdlatex-math-symbol-alist= are useful for both LaTeX and Org buffers.
+I needed to customize =cdlatex-takeover-parenthesis= (see [[https://github.com/cdominik/cdlatex/issues/15#issuecomment-864529972][this issue]]).
 
 #+begin_src emacs-lisp
 (use-package cdlatex
@@ -125,11 +119,8 @@ It was needed to customize =cdlatex-takeover-parenthesis=, see [[https://github.
 
 *** auctex
 
-https://www.gnu.org/software/auctex/
-
-#+begin_quote
-AUCTeX is an extensible package for writing and formatting TeX files in GNU Emacs and XEmacs. It supports many different TeX macro packages, including AMS-TeX, LaTeX, Texinfo, ConTeXt, and docTeX (dtx files).
-#+end_quote
+AUCTeX is an extensible package for writing and formatting TeX files in Emacs.
+See [[https://www.gnu.org/software/auctex/][AUCTeX homepage]].
 
 #+begin_src emacs-lisp
 (use-package tex
@@ -142,13 +133,13 @@ AUCTeX is an extensible package for writing and formatting TeX files in GNU Emac
     (TeX-add-symbols '("ne"))
     (TeX-add-symbols '("to"))
     (LaTeX-add-environments '("definition" LaTeX-env-label)
-			    '("theorem" LaTeX-env-label)
-			    '("lemma" LaTeX-env-label)
-			    '("corollary" LaTeX-env-label)
-			    '("proposition" LaTeX-env-label)
-			    '("problem" LaTeX-env-label)
-			    '("remark" LaTeX-env-label)
-			    '("example" LaTeX-env-label))
+                            '("theorem" LaTeX-env-label)
+                            '("lemma" LaTeX-env-label)
+                            '("corollary" LaTeX-env-label)
+                            '("proposition" LaTeX-env-label)
+                            '("problem" LaTeX-env-label)
+                            '("remark" LaTeX-env-label)
+                            '("example" LaTeX-env-label))
     (add-to-list 'LaTeX-label-alist '("definition" . "def:"))
     (add-to-list 'LaTeX-label-alist '("theorem" . "thm:"))
     (add-to-list 'LaTeX-label-alist '("lemma" . "lem:"))
@@ -182,11 +173,8 @@ AUCTeX is an extensible package for writing and formatting TeX files in GNU Emac
 
 ** Magit
 
-https://magit.vc
-
-#+begin_quote
-Magit is a complete text-based user interface to Git.
-#+end_quote
+Magit is a complete text-based user interface to Git inside Emacs.
+See [[https://magit.vc][Magit homepage]].
 
 #+begin_src emacs-lisp
 (use-package magit
@@ -194,9 +182,9 @@ Magit is a complete text-based user interface to Git.
   :bind ("C-c m" . magit-status))
 #+end_src
 
-** Org
+** Org Mode
 
-I am setting =org-src-preserve-indentation= to =t= since otherwise source blocks are changed (indented) after edited.
+I set =org-src-preserve-indentation= to =t= to prevent source block indentation from being changed after editing.
 
 #+begin_src emacs-lisp
 (use-package org
@@ -208,39 +196,33 @@ I am setting =org-src-preserve-indentation= to =t= since otherwise source blocks
   (require 'org-habit)
   (require 'org-protocol)
   :config
-  ;; see https://lists.gnu.org/archive/html/emacs-orgmode/2015-09/msg00118.html
+  ;; Helper macro for backend-specific code
   (defmacro by-backend (&rest body)
     `(cl-case org-export-current-backend ,@body))
-  ;; Set GTD. Create Inbox.org if it does not exist
+  ;; GTD system and Inbox.org creation
   (unless (file-exists-p
-	   (expand-file-name "Inbox.org" my-notes-directory))
+           (expand-file-name "Inbox.org" my-notes-directory))
     (write-region "" nil (expand-file-name "Inbox.org" my-notes-directory)))
-
-    ;; Ensure org-capture-templates exists before adding to it.
-    (unless (boundp 'org-capture-templates)
-      (setq org-capture-templates nil))  ; Initialize it if it's not bound.
-
+  (unless (boundp 'org-capture-templates)
+    (setq org-capture-templates nil))
   (defun rvf/set-gtd ()
     "Set agenda and templates for GTD"
     (add-to-list 'org-agenda-files
-		 (expand-file-name "Inbox.org" my-notes-directory))
+                 (expand-file-name "Inbox.org" my-notes-directory))
     (add-to-list 'org-capture-templates
-	     `("i" "Inbox" entry
-	       (file ,(expand-file-name "Inbox.org" my-notes-directory))
-	       ,(concat "* TODO %?\n"
-			"/Entered on/ %U")))
-    ;; http://disq.us/p/2knurta
+                 `("i" "Inbox" entry
+                   (file ,(expand-file-name "Inbox.org" my-notes-directory))
+                   ,(concat "* TODO %?\n"
+                            "/Entered on/ %U")))
     (add-to-list 'org-capture-templates
-		 `("w" "web" entry
-		   (file+headline ,(expand-file-name "Inbox.org" my-notes-directory) "Web")
-		   "* %a\n\n%U\n%i%?")))
-
+                 `("w" "web" entry
+                   (file+headline ,(expand-file-name "Inbox.org" my-notes-directory) "Web")
+                   "* %a\n\n%U\n%i%?")))
   (rvf/set-gtd)
-
   (defun my-org-mode-hook ()
     (turn-on-auto-revert-mode)
     (turn-on-org-cdlatex))
-
+  ;; Font scaling for better readability
   (set-face-attribute 'org-level-1 nil :height 1.5)
   (set-face-attribute 'org-level-2 nil :height 1.3)
   (set-face-attribute 'org-level-3 nil :height 1.2)
@@ -265,13 +247,10 @@ I am setting =org-src-preserve-indentation= to =t= since otherwise source blocks
 
 *** org-fragtog
 
-https://github.com/io12/org-fragtog
+=org-fragtog= automatically toggles Org mode LaTeX fragment previews as the cursor enters and exits them.
+See [[https://github.com/io12/org-fragtog][org-fragtog on GitHub]].
 
-#+begin_quote
-Automatically toggle Org mode LaTeX fragment previews as the cursor enters and exits them
-#+end_quote
-
-For some reason, by default the previews are too small, so we have to increase the scale.
+By default, previews are too small, so I increase the scale.
 
 #+begin_src emacs-lisp
 (use-package org-fragtog
@@ -288,7 +267,7 @@ For some reason, by default the previews are too small, so we have to increase t
 
 *** gptel
 
-I had to set =gptel-include-reasoning= to =nil= to make =gptel-magit= work.
+I set =gptel-include-reasoning= to =nil= so that =gptel-magit= works as expected.
 
 #+begin_src emacs-lisp
 (use-package gptel
@@ -303,7 +282,8 @@ I had to set =gptel-include-reasoning= to =nil= to make =gptel-magit= work.
 
 *** gptel-magit
 
-https://github.com/ragnard/gptel-magit
+This package integrates GPTel with Magit to generate commit messages using LLMs.
+See [[https://github.com/ragnard/gptel-magit][gptel-magit on GitHub]].
 
 #+begin_src emacs-lisp
 (use-package gptel-magit
@@ -315,11 +295,8 @@ https://github.com/ragnard/gptel-magit
 
 *** math-delimiters
 
-https://github.com/oantolin/math-delimiters
-
-#+begin_quote
-This package provides the command math-delimiters-insert to insert TeX/LaTeX math delimiters.
-#+end_quote
+The =math-delimiters= package provides commands to easily insert TeX/LaTeX math delimiters.
+See [[https://github.com/oantolin/math-delimiters][math-delimiters on GitHub]].
 
 #+begin_src emacs-lisp
 (use-package math-delimiters
@@ -335,5 +312,3 @@ This package provides the command math-delimiters-insert to insert TeX/LaTeX mat
   (with-eval-after-load 'latex
     (define-key LaTeX-mode-map "$" #'math-delimiters-insert)))
 #+end_src
-
-
