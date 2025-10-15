@@ -296,3 +296,28 @@ For some reason, by default the previews are too small, so we have to increase t
   :bind
   ("C-c g" . gptel))
 #+end_src
+** Math
+
+*** math-delimiters
+
+https://github.com/oantolin/math-delimiters
+
+#+begin_quote
+This package provides the command math-delimiters-insert to insert TeX/LaTeX math delimiters.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package math-delimiters
+  :straight (:host github :repo "oantolin/math-delimiters")
+  :after (org cdlatex)
+  :bind (:map org-mode-map
+              ("$" . math-delimiters-insert))
+  :config
+  ;; Unbind $ in cdlatex-mode-map (when cdlatex is loaded)
+  (with-eval-after-load 'cdlatex
+    (define-key cdlatex-mode-map "$" nil))
+  ;; Bind $ in LaTeX-mode-map (when latex is loaded)
+  (with-eval-after-load 'latex
+    (define-key LaTeX-mode-map "$" #'math-delimiters-insert)))
+#+end_src
+
