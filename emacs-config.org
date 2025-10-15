@@ -286,16 +286,31 @@ For some reason, by default the previews are too small, so we have to increase t
 
 ** AI
 
+*** gptel
+
+I had to set =gptel-include-reasoning= to =nil= to make =gptel-magit= work.
+
 #+begin_src emacs-lisp
 (use-package gptel
   :straight t
   :defer t
   :custom
   (gptel-default-mode 'org-mode)
-  ;; Optionally add a keybinding for convenience:
+  (gptel-include-reasoning nil)
   :bind
   ("C-c g" . gptel))
 #+end_src
+
+*** gptel-magit
+
+https://github.com/ragnard/gptel-magit
+
+#+begin_src emacs-lisp
+(use-package gptel-magit
+  :straight t
+  :hook (magit-mode . gptel-magit-install))
+#+end_src
+
 ** Math
 
 *** math-delimiters
@@ -320,4 +335,5 @@ This package provides the command math-delimiters-insert to insert TeX/LaTeX mat
   (with-eval-after-load 'latex
     (define-key LaTeX-mode-map "$" #'math-delimiters-insert)))
 #+end_src
+
 
