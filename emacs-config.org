@@ -1,0 +1,188 @@
+* Configuration File for Emacs
+
+I am starting again a configuration file, hoping that this time it grows in a better way, and trying to solve problems immediately, maybe helped by IA.
+
+** Personal Settings
+
+#+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
+(if (file-exists-p
+     (expand-file-name "personal.org" user-emacs-directory))
+     (org-babel-load-file  (expand-file-name "personal.org" user-emacs-directory)))
+#+end_src
+
+** Emacs General Settings
+
+#+begin_src emacs-lisp
+(use-package emacs
+  :bind
+  ("C-x k" . kill-current-buffer)
+  ([(f2) (f2)] . indent-according-to-mode)
+  ([(f2) (r)] . recentf)
+  ([(super down)] . duplicate-line-forward)
+  ([(super up)] . duplicate-line-backward)
+  :custom
+  (confirm-nonexistent-file-or-buffer nil)
+  (frame-title-format "%b: %+%+ %f")
+  (mouse-drag-copy-region t)
+  :hook
+  (prog-mode . flyspell-prog-mode)
+  (text-mode . abbrev-mode)
+  (text-mode . flyspell-mode)
+  :init
+  (global-visual-line-mode)
+  (recentf-mode)
+  ;; From: sandipchitale@yahoo.com (Sandip Chitale)
+  ;; Newsgroups: gnu.emacs.sources
+  ;; Subject: CODE: Duplicate line or region backward or forward
+  ;; Date: 7 Feb 2004 12:15:35 -0800
+  (defun duplicate-line-backward ()
+    "Duplicate the current line backward."
+    (interactive "*")
+    (save-excursion
+      (let ((contents (buffer-substring
+                       (line-beginning-position)
+                       (line-end-position))))
+	(beginning-of-line)
+	(insert contents ?\n)))
+    (previous-line 1))
+  (defun duplicate-line-forward ()
+    "Duplicate the current line forward."
+    (interactive "*")
+    (save-excursion
+      (let ((contents (buffer-substring
+                       (line-beginning-position)
+                       (line-end-position))))
+	(end-of-line)
+	(insert ?\n contents)))
+    (next-line 1))
+  :config
+  (when (boundp 'ido-mode)
+    (ido-mode 1)
+    (setq ido-auto-merge-delay-time 5)))
+#+end_src
+
+
+** Fonts and Appearance
+
+Mix fixed-pitch and variable-pitch fonts in Emacs, for a more pleasant reading and writing experience in text buffers. This is a minor mode. See https://gitlab.com/jabranham/mixed-pitch
+
+#+begin_src emacs-lisp
+(use-package mixed-pitch
+  :straight t
+  :hook
+  (text-mode . mixed-pitch-mode))
+#+end_src
+
+** LaTeX
+
+*** cdlatex
+
+https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex/
+
+#+BEGIN_QUOTE
+CDLaTeX is a minor mode for Emacs supporting fast insertion of environment templates and math stuff in LaTeX. Similar commands are also offered as part of the AUCTeX package, but it is not the same - CDLaTeX focuses on speediness for inserting LaTeX constructs. I myself am using CDLaTeX on top of AUCTeX.
+#+END_QUOTE
+
+The settings in =cdlatex-math-symbol-alist= are useful also when writing math in org-mode.
+
+It was needed to customize =cdlatex-takeover-parenthesis=, see [[https://github.com/cdominik/cdlatex/issues/15#issuecomment-864529972][this issue]].
+
+#+begin_src emacs-lisp
+(use-package cdlatex
+  :straight t
+  :custom
+  (cdlatex-math-symbol-alist
+   '(( ?c   ("\\colon"))
+     ( ?m   ("\\mu" "\\mapsto"))
+     ( ?p   ("\\pi" "\\varpi" "\\perp"))
+     ( ?o   ("\\omega" "\\oplus"))
+     ( ?O   ("\\Omega" "\\mathrm{Orb}"))
+     ( ?S   ("\\Sigma" "\\mathrm{Stab}"))
+     ( ?T   ("\\bigtriangleup"))
+     ( ?-   ("\\cap" "\\leftrightarrow" "\\longleftrightarrow"))
+     ( ?.   ("\\ldots" "\\cdots" "\\cdot"))
+     ( ?*   ("\\times" "\\otimes"))
+     ( ?<   ("\\leq" "\\langle" "\\trianglelefteq"))
+     ( ?>   ("\\geq" "\\rangle" "\\trianglerighteq"))
+     ( ?=   ("\\simeq" "\\sim"))
+     ( ?\[  ("\\subseteq"))))
+  (cdlatex-math-modify-alist
+   '(( ?a "\\overrightarrow" nil t nil nil)
+     ( ?k "\\mathfrak" nil t nil nil)
+     ( ?B "\\mathbb"         nil t nil nil)))
+  (cdlatex-command-alist
+   '(("bin"  "Insert \\binom{}{}"
+      "\\binom{?}{}"       cdlatex-position-cursor nil nil t)
+     ("norm" "Insert \\Vert \\Vert"
+      "\\Vert ?\\Vert"     cdlatex-position-cursor nil nil t)
+     ("gen"  "Insert \\langle \\rangle"
+      "\\langle ?\\rangle" cdlatex-position-cursor nil nil t)
+     ("set"  "Insert a set"
+      "\\{?\\mid \\}"      cdlatex-position-cursor nil nil t)))
+  (cdlatex-simplify-sub-super-scripts nil)
+  (cdlatex-takeover-parenthesis nil))
+#+end_src
+
+*** auctex
+
+https://www.gnu.org/software/auctex/
+
+#+begin_quote
+AUCTeX is an extensible package for writing and formatting TeX files in GNU Emacs and XEmacs. It supports many different TeX macro packages, including AMS-TeX, LaTeX, Texinfo, ConTeXt, and docTeX (dtx files).
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package tex
+  :straight auctex
+  :mode ("\\.tikz\\'" . latex-mode)
+  :init
+  (defun my-latex-config ()
+    (TeX-add-symbols '("deg"))
+    (TeX-add-symbols '("emph" 1))
+    (TeX-add-symbols '("ne"))
+    (TeX-add-symbols '("to"))
+    (LaTeX-add-environments '("definition" LaTeX-env-label)
+			    '("theorem" LaTeX-env-label)
+			    '("lemma" LaTeX-env-label)
+			    '("corollary" LaTeX-env-label)
+			    '("proposition" LaTeX-env-label)
+			    '("problem" LaTeX-env-label)
+			    '("remark" LaTeX-env-label)
+			    '("example" LaTeX-env-label))
+    (add-to-list 'LaTeX-label-alist '("definition" . "def:"))
+    (add-to-list 'LaTeX-label-alist '("theorem" . "thm:"))
+    (add-to-list 'LaTeX-label-alist '("lemma" . "lem:"))
+    (add-to-list 'LaTeX-label-alist '("corollary" . "cor:"))
+    (add-to-list 'LaTeX-label-alist '("proposition" . "prop:"))
+    (add-to-list 'LaTeX-label-alist '("problem" . "prob:"))
+    (add-to-list 'LaTeX-label-alist '("remark" . "rem:"))
+    (add-to-list 'LaTeX-label-alist '("example" . "exa:"))
+    (add-to-list 'reftex-label-alist '("definition" ?d "def:" "~\\ref{%s}" nil ("Definition" "definition")))
+    (add-to-list 'reftex-label-alist '("theorem" ?h "thm:" "~\\ref{%s}" nil ("Theorem" "theorem")))
+    (add-to-list 'reftex-label-alist '("lemma" ?l "lem:" "~\\ref{%s}" nil ("Lemma" "lemma")))
+    (add-to-list 'reftex-label-alist '("corollary" ?c "cor:" "~\\ref{%s}" nil ("Corollary" "corollary")))
+    (add-to-list 'reftex-label-alist '("proposition" ?p "prop:" "~\\ref{%s}" nil ("Proposition" "proposition")))
+    (add-to-list 'reftex-label-alist '("problem" ?b "prob:" "~\\ref{%s}" nil ("Problem" "problem")))
+    (add-to-list 'reftex-label-alist '("remark" ?r "rem:" "~\\ref{%s}" nil ("Remark" "remark")))
+    (add-to-list 'reftex-label-alist '("example" ?e "exa:" "~\\ref{%s}" nil ("Example" "example"))))
+  :custom
+  (preview-scale-function 1.2)
+  (reftex-plug-into-AUCTeX t)
+  (reftex-use-external-file-finders t)
+  (TeX-auto-save t)
+  (TeX-electric-escape t)
+  (TeX-insert-braces nil)
+  (TeX-parse-self t)
+  (TeX-save-query nil)
+  :hook
+  (LaTeX-mode . turn-on-cdlatex)
+  (LaTeX-mode . my-latex-config)
+  (LaTeX-mode . turn-on-reftex))
+#+end_src
+
+
+
+
+
+
