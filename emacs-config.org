@@ -167,7 +167,7 @@ AUCTeX is an extensible package for writing and formatting TeX files in GNU Emac
     (add-to-list 'reftex-label-alist '("remark" ?r "rem:" "~\\ref{%s}" nil ("Remark" "remark")))
     (add-to-list 'reftex-label-alist '("example" ?e "exa:" "~\\ref{%s}" nil ("Example" "example"))))
   :custom
-  (preview-scale-function 1.2)
+  (preview-scale-function 1.4)
   (reftex-plug-into-AUCTeX t)
   (reftex-use-external-file-finders t)
   (TeX-auto-save t)
