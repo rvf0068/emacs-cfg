@@ -180,6 +180,20 @@ AUCTeX is an extensible package for writing and formatting TeX files in GNU Emac
   (LaTeX-mode . my-latex-config)
   (LaTeX-mode . turn-on-reftex))
 #+end_src
+** Magit
+
+https://magit.vc
+
+#+begin_quote
+Magit is a complete text-based user interface to Git.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package magit
+  :straight t
+  :bind ("C-c m" . magit-status))
+#+end_src
+
 
 
 
