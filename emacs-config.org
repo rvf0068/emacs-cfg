@@ -263,6 +263,27 @@ I am setting =org-src-preserve-indentation= to =t= since otherwise source blocks
   (org-babel-after-execute . org-redisplay-inline-images))
 #+end_src
 
+*** org-fragtog
+
+https://github.com/io12/org-fragtog
+
+#+begin_quote
+Automatically toggle Org mode LaTeX fragment previews as the cursor enters and exits them
+#+end_quote
+
+For some reason, by default the previews are too small, so we have to increase the scale.
+
+#+begin_src emacs-lisp
+(use-package org-fragtog
+  :straight t
+  :after org
+  :custom
+  (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}"))
+  (org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+  :init
+  (add-hook 'org-mode-hook 'org-fragtog-mode))
+#+end_src
+
 ** AI
 
 #+begin_src emacs-lisp
