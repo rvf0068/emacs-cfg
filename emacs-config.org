@@ -19,8 +19,7 @@ This file documents my Emacs configuration. My goal is to keep it maintainable a
   ("C-x k" . kill-current-buffer)
   ([(f2) (f2)] . indent-according-to-mode)
   ([(f2) (r)] . recentf)
-  ([(super down)] . duplicate-line-forward)
-  ([(super up)] . duplicate-line-backward)
+  ([(super down)] . (lambda () (interactive) (duplicate-line 1)))
   :custom
   (confirm-nonexistent-file-or-buffer nil)
   (frame-title-format "%b: %+%+ %f")
@@ -31,28 +30,7 @@ This file documents my Emacs configuration. My goal is to keep it maintainable a
   (text-mode . flyspell-mode)
   :init
   (global-visual-line-mode)
-  (recentf-mode)
-  ;; Duplicate line functions adapted from Sandip Chitale (gnu.emacs.sources, 2004)
-  (defun duplicate-line-backward ()
-    "Duplicate the current line backward."
-    (interactive "*")
-    (save-excursion
-      (let ((contents (buffer-substring
-                       (line-beginning-position)
-                       (line-end-position))))
-        (beginning-of-line)
-        (insert contents ?\n)))
-    (previous-line 1))
-  (defun duplicate-line-forward ()
-    "Duplicate the current line forward."
-    (interactive "*")
-    (save-excursion
-      (let ((contents (buffer-substring
-                       (line-beginning-position)
-                       (line-end-position))))
-        (end-of-line)
-        (insert ?\n contents)))
-    (next-line 1)))
+  (recentf-mode))
 #+end_src
 
 *** dired
