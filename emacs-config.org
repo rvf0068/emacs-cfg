@@ -44,9 +44,10 @@ Dired makes an Emacs buffer containing a listing of a directory, and optionally 
 #+begin_src emacs-lisp
 (use-package dired
   :straight (:type built-in)
+  :config
+  (require 'dired-x)
   :custom
-  (dired-dwim-target t)
-  (use-package dired-x))
+  (dired-dwim-target t))
 #+end_src
 
 ** Fonts and Appearance
