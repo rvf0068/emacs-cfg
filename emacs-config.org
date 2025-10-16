@@ -52,11 +52,7 @@ This file documents my Emacs configuration. My goal is to keep it maintainable a
                        (line-end-position))))
         (end-of-line)
         (insert ?\n contents)))
-    (next-line 1))
-  :config
-  (when (boundp 'ido-mode)
-    (ido-mode 1)
-    (setq ido-auto-merge-delay-time 5)))
+    (next-line 1)))
 #+end_src
 
 *** dired
@@ -372,9 +368,11 @@ Emacs package to quickly find and act on bibliographic references, and edit org,
 
 *** vertico
 
+https://github.com/minad/vertico
+
 It seems that =citar-open= is not so useful without =vertico=. And this is not so useful without =orderless=.
 
-https://github.com/minad/vertico
+I have configured =vertico= to behave like =ido= when doing =C-x C-f=.
 
 #+begin_quote
 vertico.el - VERTical Interactive COmpletion
@@ -384,7 +382,15 @@ vertico.el - VERTical Interactive COmpletion
 (use-package vertico
   :straight t
   :init
-  (vertico-mode))
+  (vertico-mode)
+  :config
+  ;; This enables per-category configurations for Vertico.
+  (vertico-multiform-mode)
+  :custom
+  ;; This tells vertico-multiform-mode to apply the special
+  ;; 'vertico-directory-map' to any completion category of type 'file'.
+  (vertico-multiform-categories
+   '((file (:keymap . vertico-directory-map)))))
 #+end_src
 
 *** orderless
