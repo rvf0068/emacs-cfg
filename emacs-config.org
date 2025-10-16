@@ -210,9 +210,6 @@ I set =org-src-preserve-indentation= to =t= to prevent source block indentation 
                    (file+headline ,(expand-file-name "Inbox.org" my-notes-directory) "Web")
                    "* %a\n\n%U\n%i%?")))
   (rvf/set-gtd)
-  (defun my-org-mode-hook ()
-    (turn-on-auto-revert-mode)
-    (turn-on-org-cdlatex))
   ;; Font scaling for better readability
   (set-face-attribute 'org-level-1 nil :height 1.5)
   (set-face-attribute 'org-level-2 nil :height 1.3)
@@ -232,7 +229,8 @@ I set =org-src-preserve-indentation= to =t= to prevent source block indentation 
   (org-src-preserve-indentation t)
   (org-support-shift-select 'always)
   :hook
-  (org-mode . my-org-mode-hook)
+  (org-mode . turn-on-auto-revert-mode)
+  (org-mode . org-cdlatex-mode)
   (org-babel-after-execute . org-redisplay-inline-images))
 #+end_src
 
