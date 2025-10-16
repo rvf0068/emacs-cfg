@@ -301,7 +301,38 @@ See [[https://github.com/oantolin/math-delimiters][math-delimiters on GitHub]].
   (with-eval-after-load 'latex
     (define-key LaTeX-mode-map "$" #'math-delimiters-insert)))
 #+end_src
+
 ** Misc Tools
+
+*** consult
+
+https://github.com/minad/consult
+
+#+begin_quote
+consult.el - Consulting completing-read
+#+end_quote
+
+=consult-imenu= and =consult-line= are interesting to navigate files, especially org-mode files.
+
+I am using =bms/org-roam-rg-search= is a substitute of the package =deft.=
+
+#+begin_src emacs-lisp
+(use-package consult
+  :straight t
+  :bind
+  ("<f5> d" . bms/org-roam-rg-search)
+  ("<f5> l" . consult-line)
+  ("<f5> r" . consult-ripgrep)
+  :init
+  ;;; https://org-roam.discourse.group/t/using-consult-ripgrep-with-org-roam-for-searching-notes/1226
+  (defun bms/org-roam-rg-search ()
+    "Search org-roam directory using consult-ripgrep. With live-preview."
+    (interactive)
+    (let ((consult-ripgrep-command
+	   "rg --null --ignore-case --type org --line-buffered --color=always --max-columns=500 --no-heading --line-number . -e ARG OPTS"))
+      (consult-ripgrep my-notes-directory))))
+#+end_src
+
 *** embark
 
 https://github.com/oantolin/embark
@@ -314,9 +345,13 @@ Emacs Mini-Buffer Actions Rooted in Keymaps
 (use-package embark
   :straight t
   :bind
-  (("C-=" . embark-act))
-  :custom
-  (use-package embark-consult))
+  (("C-=" . embark-act)))
+
+(use-package embark-consult
+  :straight t
+  :after (embark consult)
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
 
 *** citar
@@ -385,4 +420,3 @@ Emacs completion style that matches multiple regexps in any order
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
-
