@@ -1,8 +1,36 @@
+#+title: Emacs Configuration
+#+author:
+#+options: toc:nil num:nil
+
 * Emacs Configuration
 
 This file documents my Emacs configuration. My goal is to keep it maintainable and extensible, addressing problems as they arise, sometimes with the help of AI.
 
+** Keybindings Summary
+
+Here is a summary of the custom keybindings defined in this configuration.
+
+| Keybinding | Command                  | Scope / Mode         |
+|------------+--------------------------+----------------------|
+| =C-x k=      | =kill-current-buffer=      | Global               |
+| =f2 f2=      | =indent-according-to-mode= | Global               |
+| =f2 r=       | =recentf=                  | Global               |
+| =super down= | =duplicate-line=           | Global               |
+| =C-c m=      | =magit-status=             | Global               |
+| =C-c a=      | =org-agenda=               | Global               |
+| =C-c c=      | =org-capture=              | Global               |
+| =C-c g=      | =gptel=                    | Global               |
+| =<f5> d=     | =bms/org-roam-rg-search=   | Global               |
+| =<f5> l=     | =consult-line=             | Global               |
+| =<f5> r=     | =consult-ripgrep=          | Global               |
+| =C-==        | =embark-act=               | Global               |
+| =f7=         | =citar-open=               | Global               |
+| =<f5> b=     | =citar-insert-bibtex=      | Global               |
+| =$=          | =math-delimiters-insert=   | =org-mode=, =LaTeX-mode= |
+
 ** Personal Settings
+
+Loads a separate =personal.org= file for private configurations.
 
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
@@ -12,6 +40,8 @@ This file documents my Emacs configuration. My goal is to keep it maintainable a
 #+end_src
 
 ** General Emacs Settings
+
+Core settings for Emacs behavior, keybindings, and hooks for fundamental modes.
 
 #+begin_src emacs-lisp
 (use-package emacs
@@ -33,13 +63,9 @@ This file documents my Emacs configuration. My goal is to keep it maintainable a
   (recentf-mode))
 #+end_src
 
-*** dired
+*** Dired
 
-https://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html
-
-#+begin_quote
-Dired makes an Emacs buffer containing a listing of a directory, and optionally some of its subdirectories as well. You can use the normal Emacs commands to move around in this buffer, and special Dired commands to operate on the listed files.
-#+end_quote
+Dired is the built-in Emacs file manager, documented in the [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html][Emacs manual]]. It provides an interactive buffer where you can act on files and directories. This configuration enables =dired-x=, which provides extra functionality, and sets =dired-dwim-target= to make moving and copying files more intuitive.
 
 #+begin_src emacs-lisp
 (use-package dired
@@ -52,8 +78,9 @@ Dired makes an Emacs buffer containing a listing of a directory, and optionally 
 
 ** Fonts and Appearance
 
-Enable =mixed-pitch-mode= in text buffers to combine fixed-pitch and variable-pitch fonts for improved readability.
-See [[https://gitlab.com/jabranham/mixed-pitch][mixed-pitch on GitLab]].
+*** mixed-pitch
+
+The [[https://gitlab.com/jabranham/mixed-pitch][mixed-pitch]] package enables a combination of fixed-pitch and variable-pitch fonts in text buffers, which can significantly improve readability.
 
 #+begin_src emacs-lisp
 (use-package mixed-pitch
@@ -64,54 +91,11 @@ See [[https://gitlab.com/jabranham/mixed-pitch][mixed-pitch on GitLab]].
 
 ** LaTeX
 
-*** cdlatex
+This section configures packages for writing and managing LaTeX documents.
 
-CDLaTeX is a minor mode for fast insertion of environment templates and math in LaTeX and Org buffers.
-See [[https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex/][cdlatex homepage]].
+*** AUCTeX
 
-The custom settings in =cdlatex-math-symbol-alist= are useful for both LaTeX and Org buffers.
-I needed to customize =cdlatex-takeover-parenthesis= (see [[https://github.com/cdominik/cdlatex/issues/15#issuecomment-864529972][this issue]]).
-
-#+begin_src emacs-lisp
-(use-package cdlatex
-  :straight t
-  :custom
-  (cdlatex-math-symbol-alist
-   '(( ?c   ("\\colon"))
-     ( ?m   ("\\mu" "\\mapsto"))
-     ( ?p   ("\\pi" "\\varpi" "\\perp"))
-     ( ?o   ("\\omega" "\\oplus"))
-     ( ?O   ("\\Omega" "\\mathrm{Orb}"))
-     ( ?S   ("\\Sigma" "\\mathrm{Stab}"))
-     ( ?T   ("\\bigtriangleup"))
-     ( ?-   ("\\cap" "\\leftrightarrow" "\\longleftrightarrow"))
-     ( ?.   ("\\ldots" "\\cdots" "\\cdot"))
-     ( ?*   ("\\times" "\\otimes"))
-     ( ?<   ("\\leq" "\\langle" "\\trianglelefteq"))
-     ( ?>   ("\\geq" "\\rangle" "\\trianglerighteq"))
-     ( ?=   ("\\simeq" "\\sim"))
-     ( ?\[  ("\\subseteq"))))
-  (cdlatex-math-modify-alist
-   '(( ?a "\\overrightarrow" nil t nil nil)
-     ( ?k "\\mathfrak" nil t nil nil)
-     ( ?B "\\mathbb"         nil t nil nil)))
-  (cdlatex-command-alist
-   '(("bin"  "Insert \\binom{}{}"
-      "\\binom{?}{}"       cdlatex-position-cursor nil nil t)
-     ("norm" "Insert \\Vert \\Vert"
-      "\\Vert ?\\Vert"     cdlatex-position-cursor nil nil t)
-     ("gen"  "Insert \\langle \\rangle"
-      "\\langle ?\\rangle" cdlatex-position-cursor nil nil t)
-     ("set"  "Insert a set"
-      "\\{?\\mid \\}"      cdlatex-position-cursor nil nil t)))
-  (cdlatex-simplify-sub-super-scripts nil)
-  (cdlatex-takeover-parenthesis nil))
-#+end_src
-
-*** auctex
-
-AUCTeX is an extensible package for writing and formatting TeX files in Emacs.
-See [[https://www.gnu.org/software/auctex/][AUCTeX homepage]].
+[[https://www.gnu.org/software/auctex/][AUCTeX]] is a comprehensive and extensible environment for writing and formatting TeX and LaTeX files in Emacs. The configuration below customizes environments and labels for =reftex= integration.
 
 #+begin_src emacs-lisp
 (use-package tex
@@ -162,20 +146,83 @@ See [[https://www.gnu.org/software/auctex/][AUCTeX homepage]].
   (LaTeX-mode . reftex-mode))
 #+end_src
 
-** Magit
+*** cdlatex
 
-Magit is a complete text-based user interface to Git inside Emacs.
-See [[https://magit.vc][Magit homepage]].
+See the [[https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex/][cdlatex homepage]]. CDLaTeX is a minor mode for quickly inserting LaTeX environments and mathematical symbols. It is particularly useful in both LaTeX and Org buffers. The =cdlatex-takeover-parenthesis= variable is customized to resolve a [[https://github.com/cdominik/cdlatex/issues/15#issuecomment-864529972][known issue]].
+
+The following table summarizes the custom math symbol additions.
+
+| Trigger Key | First Expansion | Second Expansion | Third Expansion     |
+|-------------+-----------------+------------------+---------------------|
+| =c=           | =\colon=          |                  |                     |
+| =m=           | =\mu=             | =\mapsto=          |                     |
+| =p=           | =\pi=             | =\varpi=           | =\perp=               |
+| =o=           | =\omega=          | =\oplus=           |                     |
+| =O=           | =\Omega=          | =\mathrm{Orb}=     |                     |
+| =S=           | =\Sigma=          | =\mathrm{Stab}=    |                     |
+| =T=           | =\bigtriangleup=  |                  |                     |
+| =-=           | =\cap=            | =\leftrightarrow=  | =\longleftrightarrow= |
+| =.=           | =\ldots=          | =\cdots=           | =\cdot=               |
+| =*=           | =\times=          | =\otimes=          |                     |
+| =<=           | =\leq=            | =\langle=          | =\trianglelefteq=     |
+| =>=           | =\geq=            | =\rangle=          | =\trianglerighteq=    |
+| ===           | =\simeq=          | =\sim=             |                     |
+| =[=           | =\subseteq=       |                  |                     |
 
 #+begin_src emacs-lisp
-(use-package magit
+(use-package cdlatex
   :straight t
-  :bind ("C-c m" . magit-status))
+  :custom
+  (cdlatex-math-symbol-alist
+   '(( ?c   ("\\colon"))
+     ( ?m   ("\\mu" "\\mapsto"))
+     ( ?p   ("\\pi" "\\varpi" "\\perp"))
+     ( ?o   ("\\omega" "\\oplus"))
+     ( ?O   ("\\Omega" "\\mathrm{Orb}"))
+     ( ?S   ("\\Sigma" "\\mathrm{Stab}"))
+     ( ?T   ("\\bigtriangleup"))
+     ( ?-   ("\\cap" "\\leftrightarrow" "\\longleftrightarrow"))
+     ( ?.   ("\\ldots" "\\cdots" "\\cdot"))
+     ( ?*   ("\\times" "\\otimes"))
+     ( ?<   ("\\leq" "\\langle" "\\trianglelefteq"))
+     ( ?>   ("\\geq" "\\rangle" "\\trianglerighteq"))
+     ( ?=   ("\\simeq" "\\sim"))
+     ( ?\[  ("\\subseteq"))))
+  (cdlatex-math-modify-alist
+   '(( ?a "\\overrightarrow" nil t nil nil)
+     ( ?k "\\mathfrak" nil t nil nil)
+     ( ?B "\\mathbb"         nil t nil nil)))
+  (cdlatex-command-alist
+   '(("bin"  "Insert \\binom{}{}" "\\binom{?}{}" cdlatex-position-cursor nil nil t)
+     ("norm" "Insert \\Vert \\Vert" "\\Vert ?\\Vert" cdlatex-position-cursor nil nil t)
+     ("gen"  "Insert \\langle \\rangle" "\\langle ?\\rangle" cdlatex-position-cursor nil nil t)
+     ("set"  "Insert a set" "\\{?\\mid \\}" cdlatex-position-cursor nil nil t)))
+  (cdlatex-simplify-sub-super-scripts nil)
+  (cdlatex-takeover-parenthesis nil))
+#+end_src
+
+*** math-delimiters
+
+The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package provides convenient commands for inserting TeX/LaTeX math delimiters like parentheses and brackets. It is configured to take over the =$= key in both Org and LaTeX modes.
+
+#+begin_src emacs-lisp
+(use-package math-delimiters
+  :straight (:host github :repo "oantolin/math-delimiters")
+  :after (org cdlatex)
+  :bind (:map org-mode-map
+              ("$" . math-delimiters-insert))
+  :config
+  ;; Unbind $ in cdlatex-mode-map (when cdlatex is loaded)
+  (with-eval-after-load 'cdlatex
+    (define-key cdlatex-mode-map "$" nil))
+  ;; Bind $ in LaTeX-mode-map (when latex is loaded)
+  (with-eval-after-load 'latex
+    (define-key LaTeX-mode-map "$" #'math-delimiters-insert)))
 #+end_src
 
 ** Org Mode
 
-I set =org-src-preserve-indentation= to =t= to prevent source block indentation from being changed after editing.
+This section contains the configuration for Org mode, a powerful system for outlining, note-taking, project planning, and authoring.
 
 #+begin_src emacs-lisp
 (use-package org
@@ -236,10 +283,7 @@ I set =org-src-preserve-indentation= to =t= to prevent source block indentation 
 
 *** org-fragtog
 
-=org-fragtog= automatically toggles Org mode LaTeX fragment previews as the cursor enters and exits them.
-See [[https://github.com/io12/org-fragtog][org-fragtog on GitHub]].
-
-By default, previews are too small, so I increase the scale.
+The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the experience of working with LaTeX in Org mode by automatically toggling fragment previews as the cursor moves in and out of them. The default scale is increased for better visibility.
 
 #+begin_src emacs-lisp
 (use-package org-fragtog
@@ -252,69 +296,44 @@ By default, previews are too small, so I increase the scale.
   (add-hook 'org-mode-hook 'org-fragtog-mode))
 #+end_src
 
-** AI
+** Completion and Navigation
 
-*** gptel
+This section details the modern completion system composed of Vertico, Orderless, Consult, and Embark.
 
-I set =gptel-include-reasoning= to =nil= so that =gptel-magit= works as expected.
+*** Vertico
+
+[[https://github.com/minad/vertico][Vertico]] provides a high-performance, vertical completion UI. It is configured here to use =vertico-multiform-mode=, which enables special keymaps for different types of completion. Specifically, it's set to provide an Ido-like experience for file navigation.
 
 #+begin_src emacs-lisp
-(use-package gptel
+(use-package vertico
   :straight t
-  :defer t
-  :custom
-  (gptel-default-mode 'org-mode)
-  (gptel-include-reasoning nil)
-  :bind
-  ("C-c g" . gptel))
-#+end_src
-
-*** gptel-magit
-
-This package integrates GPTel with Magit to generate commit messages using LLMs.
-See [[https://github.com/ragnard/gptel-magit][gptel-magit on GitHub]].
-
-#+begin_src emacs-lisp
-(use-package gptel-magit
-  :straight t
-  :hook (magit-mode . gptel-magit-install))
-#+end_src
-
-** Math
-
-*** math-delimiters
-
-The =math-delimiters= package provides commands to easily insert TeX/LaTeX math delimiters.
-See [[https://github.com/oantolin/math-delimiters][math-delimiters on GitHub]].
-
-#+begin_src emacs-lisp
-(use-package math-delimiters
-  :straight (:host github :repo "oantolin/math-delimiters")
-  :after (org cdlatex)
-  :bind (:map org-mode-map
-              ("$" . math-delimiters-insert))
+  :init
+  (vertico-mode)
   :config
-  ;; Unbind $ in cdlatex-mode-map (when cdlatex is loaded)
-  (with-eval-after-load 'cdlatex
-    (define-key cdlatex-mode-map "$" nil))
-  ;; Bind $ in LaTeX-mode-map (when latex is loaded)
-  (with-eval-after-load 'latex
-    (define-key LaTeX-mode-map "$" #'math-delimiters-insert)))
+  ;; This enables per-category configurations for Vertico.
+  (vertico-multiform-mode)
+  :custom
+  ;; This tells vertico-multiform-mode to apply the special
+  ;; 'vertico-directory-map' to any completion category of type 'file'.
+  (vertico-multiform-categories
+   '((file (:keymap . vertico-directory-map)))))
 #+end_src
 
-** Misc Tools
+*** Orderless
 
-*** consult
+[[https://github.com/oantolin/orderless][Orderless]] is a completion style that allows matching items by entering multiple patterns in any order. This provides a more flexible and powerful way to filter candidates compared to standard completion.
 
-https://github.com/minad/consult
+#+begin_src emacs-lisp
+(use-package orderless
+  :straight t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+#+end_src
 
-#+begin_quote
-consult.el - Consulting completing-read
-#+end_quote
+*** Consult
 
-=consult-imenu= and =consult-line= are interesting to navigate files, especially org-mode files.
-
-I am using =bms/org-roam-rg-search= is a substitute of the package =deft.=
+[[https://github.com/minad/consult][Consult]] offers a suite of commands that enhance searching and navigation by using the underlying completion system (Vertico). Commands like =consult-line= and =consult-ripgrep= provide an interactive way to find content. A custom function is defined to search within the Org notes directory specifically.
 
 #+begin_src emacs-lisp
 (use-package consult
@@ -333,13 +352,9 @@ I am using =bms/org-roam-rg-search= is a substitute of the package =deft.=
       (consult-ripgrep my-notes-directory))))
 #+end_src
 
-*** embark
+*** Embark
 
-https://github.com/oantolin/embark
-
-#+begin_quote
-Emacs Mini-Buffer Actions Rooted in Keymaps
-#+end_quote
+[[https://github.com/oantolin/embark][Embark]] provides contextual actions for the item-at-point or for completion candidates in the minibuffer. It allows you to act on targets (files, buffers, commands, etc.) in a consistent way. =embark-consult= provides enhanced integration between the two packages.
 
 #+begin_src emacs-lisp
 (use-package embark
@@ -354,17 +369,48 @@ Emacs Mini-Buffer Actions Rooted in Keymaps
   (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
 
-*** citar
+** Development and AI
 
-https://github.com/emacs-citar/citar
+*** Magit
 
-#+begin_quote
-Emacs package to quickly find and act on bibliographic references, and edit org, markdown, and latex academic documents.
-#+end_quote
+[[https://magit.vc][Magit]] is a complete text-based user interface for Git inside Emacs, widely considered one of the best Git clients available.
 
-- Inserting a bibtex entry to a bibtex file: run =M-x citar-open=, then select the entry, then run =C-==, (embark-act) and choose.
+#+begin_src emacs-lisp
+(use-package magit
+  :straight t
+  :bind ("C-c m" . magit-status))
+#+end_src
 
-- To convert a bibliography note made with org-roam-bibtex to use with citar, one should replace, say, the =cite:= with =@=, so that for example =:ROAM_REFS: cite:1962-lor= becomes =:ROAM_REFS: @1962-lor=.
+*** gptel
+
+GPTel provides an interface to Large Language Models (LLMs) directly within Emacs. It's configured to disable extra reasoning in responses to ensure compatibility with extensions like =gptel-magit=.
+
+#+begin_src emacs-lisp
+(use-package gptel
+  :straight t
+  :defer t
+  :custom
+  (gptel-default-mode 'org-mode)
+  (gptel-include-reasoning nil)
+  :bind
+  ("C-c g" . gptel))
+#+end_src
+
+*** gptel-magit
+
+This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates GPTel with Magit, allowing for the automatic generation of Git commit messages based on the staged changes. It is automatically activated whenever Magit is used.
+
+#+begin_src emacs-lisp
+(use-package gptel-magit
+  :straight t
+  :hook (magit-mode . gptel-magit-install))
+#+end_src
+
+** Academic and Research
+
+*** Citar
+
+[[https://github.com/emacs-citar/citar][Citar]] is a package for finding and acting on bibliographic references from within Emacs. It integrates with the completion system to make inserting citations, opening notes, and accessing associated files seamless.
 
 #+begin_src emacs-lisp
 (use-package citar
@@ -376,47 +422,4 @@ Emacs package to quickly find and act on bibliographic references, and edit org,
   (citar-bibliography my-bibliography)
   (citar-library-paths `(,my-library-path))
   (citar-notes-paths `(,my-notes-directory)))
-#+end_src
-
-*** vertico
-
-https://github.com/minad/vertico
-
-It seems that =citar-open= is not so useful without =vertico=. And this is not so useful without =orderless=.
-
-I have configured =vertico= to behave like =ido= when doing =C-x C-f=.
-
-#+begin_quote
-vertico.el - VERTical Interactive COmpletion
-#+end_quote
-
-#+begin_src emacs-lisp
-(use-package vertico
-  :straight t
-  :init
-  (vertico-mode)
-  :config
-  ;; This enables per-category configurations for Vertico.
-  (vertico-multiform-mode)
-  :custom
-  ;; This tells vertico-multiform-mode to apply the special
-  ;; 'vertico-directory-map' to any completion category of type 'file'.
-  (vertico-multiform-categories
-   '((file (:keymap . vertico-directory-map)))))
-#+end_src
-
-*** orderless
-
-https://github.com/oantolin/orderless
-
-#+begin_quote
-Emacs completion style that matches multiple regexps in any order
-#+end_quote
-
-#+begin_src emacs-lisp
-(use-package orderless
-  :straight t
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
