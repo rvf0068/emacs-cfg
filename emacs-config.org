@@ -312,3 +312,78 @@ See [[https://github.com/oantolin/math-delimiters][math-delimiters on GitHub]].
   (with-eval-after-load 'latex
     (define-key LaTeX-mode-map "$" #'math-delimiters-insert)))
 #+end_src
+** Misc Tools
+*** embark
+
+https://github.com/oantolin/embark
+
+#+begin_quote
+Emacs Mini-Buffer Actions Rooted in Keymaps
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package embark
+  :straight t
+  :bind
+  (("C-=" . embark-act))
+  :custom
+  (use-package embark-consult))
+#+end_src
+
+*** citar
+
+https://github.com/emacs-citar/citar
+
+#+begin_quote
+Emacs package to quickly find and act on bibliographic references, and edit org, markdown, and latex academic documents.
+#+end_quote
+
+- Inserting a bibtex entry to a bibtex file: run =M-x citar-open=, then select the entry, then run =C-==, (embark-act) and choose.
+
+- To convert a bibliography note made with org-roam-bibtex to use with citar, one should replace, say, the =cite:= with =@=, so that for example =:ROAM_REFS: cite:1962-lor= becomes =:ROAM_REFS: @1962-lor=.
+
+#+begin_src emacs-lisp
+(use-package citar
+  :straight t
+  :bind
+  ([(f7)] . citar-open)
+  ("<f5> b" . citar-insert-bibtex)
+  :custom
+  (citar-bibliography my-bibliography)
+  (citar-library-paths `(,my-library-path))
+  (citar-notes-paths `(,my-notes-directory)))
+#+end_src
+
+*** vertico
+
+It seems that =citar-open= is not so useful without =vertico=. And this is not so useful without =orderless=.
+
+https://github.com/minad/vertico
+
+#+begin_quote
+vertico.el - VERTical Interactive COmpletion
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package vertico
+  :straight t
+  :init
+  (vertico-mode))
+#+end_src
+
+*** orderless
+
+https://github.com/oantolin/orderless
+
+#+begin_quote
+Emacs completion style that matches multiple regexps in any order
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package orderless
+  :straight t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+#+end_src
+
