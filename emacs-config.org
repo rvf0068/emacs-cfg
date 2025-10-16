@@ -250,7 +250,7 @@ I set =org-src-preserve-indentation= to =t= to prevent source block indentation 
 =org-fragtog= automatically toggles Org mode LaTeX fragment previews as the cursor enters and exits them.
 See [[https://github.com/io12/org-fragtog][org-fragtog on GitHub]].
 
-For some reason, the size of the previews increased with an update of packages, so I had to rescale.
+By default, previews are too small, so I increase the scale.
 
 #+begin_src emacs-lisp
 (use-package org-fragtog
@@ -258,7 +258,7 @@ For some reason, the size of the previews increased with an update of packages, 
   :after org
   :custom
   (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}"))
-  (org-format-latex-options (plist-put org-format-latex-options :scale 0.9))
+  (org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
   :init
   (add-hook 'org-mode-hook 'org-fragtog-mode))
 #+end_src
