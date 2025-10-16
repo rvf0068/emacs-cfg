@@ -59,6 +59,22 @@ This file documents my Emacs configuration. My goal is to keep it maintainable a
     (setq ido-auto-merge-delay-time 5)))
 #+end_src
 
+*** dired
+
+https://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html
+
+#+begin_quote
+Dired makes an Emacs buffer containing a listing of a directory, and optionally some of its subdirectories as well. You can use the normal Emacs commands to move around in this buffer, and special Dired commands to operate on the listed files.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package dired
+  :straight (:type built-in)
+  :custom
+  (dired-dwim-target t)
+  (use-package dired-x))
+#+end_src
+
 ** Fonts and Appearance
 
 Enable =mixed-pitch-mode= in text buffers to combine fixed-pitch and variable-pitch fonts for improved readability.
