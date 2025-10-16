@@ -157,9 +157,9 @@ See [[https://www.gnu.org/software/auctex/][AUCTeX homepage]].
   (TeX-parse-self t)
   (TeX-save-query nil)
   :hook
-  (LaTeX-mode . turn-on-cdlatex)
   (LaTeX-mode . my-latex-config)
-  (LaTeX-mode . turn-on-reftex))
+  (LaTeX-mode . cdlatex-mode)
+  (LaTeX-mode . reftex-mode))
 #+end_src
 
 ** Magit
