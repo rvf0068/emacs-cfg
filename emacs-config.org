@@ -506,9 +506,13 @@ https://github.com/pzorin/bibretrieve
 An Emacs library for searching and downloading BibTeX entries from the web.
 #+end_quote
 
+http://www.zentralblatt-math.org/zmath seems to be down, so I had to configure =bibretrieve-backends=.
+
 #+begin_src emacs-lisp
 (use-package bibretrieve
-  :straight t)
+  :straight t
+  :custom
+  (bibretrieve-backends '(("mrl" . 10))))
 #+end_src
 
 *** bibtex
