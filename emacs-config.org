@@ -314,11 +314,18 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
   :config
   (setq org-roam-capture-templates
         '(("d" "project" plain
-           "\n* Goals\n\n%?\n\n* Tasks\n\n** TODO Add initial tasks\n\n* Dates\n\n"
+           "\n* Goals\n%?\n* Tasks\n\n** TODO Add initial tasks\n\n* Dates\n\n"
            :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
                               "#+title: ${title}\n#+category: ${title}\n#+filetags: Project")
            :unnarrowed t
-           :immediate-finish t))))
+           :immediate-finish t)
+        ("r" "literature note" plain
+         "%?"
+         :target
+         (file+head
+          "%(expand-file-name (or citar-org-roam-subdir \"\") org-roam-directory)/${citar-citekey}.org"
+          "#+title: (${citar-date}) ${note-title}.\n\n#+created: %U\n#+last_modified: %U\n\n")
+         :unnarrowed t))))
 #+end_src
 
 ** Completion and Navigation
@@ -450,3 +457,22 @@ This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates 
   (citar-library-paths `(,my-library-path))
   (citar-notes-paths `(,my-notes-directory)))
 #+end_src
+
+**** citar-org-roam
+
+https://github.com/emacs-citar/citar-org-roam
+
+#+begin_quote
+citar/org-roam integration
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package citar-org-roam
+  :straight t
+  :after (citar org-roam)
+  :config
+  (citar-org-roam-mode)
+  (setq citar-org-roam-note-title-template "${title} by ${author}")
+  (setq citar-org-roam-capture-template-key "r"))
+#+end_src
+
