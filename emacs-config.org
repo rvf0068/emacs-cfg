@@ -166,7 +166,7 @@ The following table summarizes the custom math symbol additions.
 | =*=           | =\times=          | =\otimes=          |                     |
 | =<=           | =\leq=            | =\langle=          | =\trianglelefteq=     |
 | =>=           | =\geq=            | =\rangle=          | =\trianglerighteq=    |
-| ===           | =\simeq=          | =\sim=             |                     |
+| ~=~           | =\simeq=          | =\sim=             |                     |
 | =[=           | =\subseteq=       |                  |                     |
 
 #+begin_src emacs-lisp
