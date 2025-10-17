@@ -222,6 +222,8 @@ The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package pro
 
 ** Org Mode
 
+https://orgmode.org/
+
 This section contains the configuration for Org mode, a powerful system for outlining, note-taking, project planning, and authoring.
 
 #+begin_src emacs-lisp
@@ -297,6 +299,8 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
 #+end_src
 
 ** org-roam
+
+https://www.orgroam.com/
 
 =org-roam-completion-everywhere= set to =t=, causes completion in org mode files to create links after typing few characters.
 
@@ -418,6 +422,8 @@ Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any s
 *** gptel
 
 GPTel provides an interface to Large Language Models (LLMs) directly within Emacs. It's configured to disable extra reasoning in responses to ensure compatibility with extensions like =gptel-magit=.
+
+https://github.com/karthink/gptel
 
 #+begin_src emacs-lisp
 (use-package gptel
