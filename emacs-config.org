@@ -296,6 +296,31 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
   (add-hook 'org-mode-hook 'org-fragtog-mode))
 #+end_src
 
+** org-roam
+
+=org-roam-completion-everywhere= set to =t=, causes completion in org mode files to create links after typing few characters.
+
+#+begin_src emacs-lisp
+(use-package org-roam
+  :straight t
+  :after org
+  :bind
+  (("C-c n f" . org-roam-node-find))
+  :custom
+  (org-roam-directory my-notes-directory)
+  (org-roam-completion-everywhere t)
+  :init
+  (org-roam-db-autosync-mode)
+  :config
+  (setq org-roam-capture-templates
+        '(("d" "project" plain
+           "\n* Goals\n\n%?\n\n* Tasks\n\n** TODO Add initial tasks\n\n* Dates\n\n"
+           :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                              "#+title: ${title}\n#+category: ${title}\n#+filetags: Project")
+           :unnarrowed t
+           :immediate-finish t))))
+#+end_src
+
 ** Completion and Navigation
 
 This section details the modern completion system composed of Vertico, Orderless, Consult, and Embark.
