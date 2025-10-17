@@ -482,3 +482,16 @@ citar/org-roam integration
   (setq citar-org-roam-capture-template-key "r"))
 #+end_src
 
+*** bibretrieve
+
+https://github.com/pzorin/bibretrieve
+
+#+begin_quote
+An Emacs library for searching and downloading BibTeX entries from the web.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package bibretrieve
+  :straight t)
+#+end_src
+
