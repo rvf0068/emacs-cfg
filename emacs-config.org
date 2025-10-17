@@ -395,11 +395,26 @@ Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any s
 
 [[https://github.com/oantolin/embark][Embark]] provides contextual actions for the item-at-point or for completion candidates in the minibuffer. It allows you to act on targets (files, buffers, commands, etc.) in a consistent way. =embark-consult= provides enhanced integration between the two packages.
 
+For example, I can run ~embark-act~ (bound to ~C-=~) on a pdf-file on ~dired~, and get a menu where I can choose ~x~ to open the file in the external viewer.
+
 #+begin_src emacs-lisp
 (use-package embark
   :straight t
   :bind
-  (("C-=" . embark-act)))
+  (("C-=" . embark-act))
+  :config
+  ;; Define the custom action
+  (defun my-embark-org-insert-link (path)
+    "An embark action to insert an org-mode link to a file.
+The PATH is supplied automatically by Embark.
+The description is set to the file name without its extension."
+    (let ((description (file-name-sans-extension (file-name-nondirectory path))))
+      ;; Manually format and insert the link string to avoid
+      ;; org-insert-link version compatibility issues.
+      (insert (format "[[file:%s][%s]]" path description))))
+
+  ;; Add the keybinding to Embark's file map
+  (define-key embark-file-map (kbd "L") #'my-embark-org-insert-link))
 
 (use-package embark-consult
   :straight t
