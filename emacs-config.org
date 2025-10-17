@@ -309,7 +309,8 @@ https://www.orgroam.com/
   :straight t
   :after org
   :bind
-  (("C-c n f" . org-roam-node-find))
+  (("<f8> f" . org-roam-node-find))
+  (("<f8> i" . org-roam-node-insert))
   :custom
   (org-roam-directory my-notes-directory)
   (org-roam-completion-everywhere t)
