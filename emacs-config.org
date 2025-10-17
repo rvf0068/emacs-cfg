@@ -304,6 +304,8 @@ This section details the modern completion system composed of Vertico, Orderless
 
 [[https://github.com/minad/vertico][Vertico]] provides a high-performance, vertical completion UI. It is configured here to use =vertico-multiform-mode=, which enables special keymaps for different types of completion. Specifically, it's set to provide an Ido-like experience for file navigation.
 
+Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any selected completion candidates.
+
 #+begin_src emacs-lisp
 (use-package vertico
   :straight t
