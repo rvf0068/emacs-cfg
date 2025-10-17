@@ -495,3 +495,41 @@ An Emacs library for searching and downloading BibTeX entries from the web.
   :straight t)
 #+end_src
 
+*** bibtex
+
+=bibtex-mode= is built-in. I redefine =bibtex-generate-autokey= to get BibTeX key in the format: year-author-title.
+
+#+begin_src emacs-lisp
+(use-package bibtex
+  :straight (:type built-in)
+  :demand t
+  :bind (:map bibtex-mode-map
+	      ("<f5> b" . bibretrieve)
+	      ("<f5> m" . mark-sexp))
+  :custom
+  (bibtex-autokey-year-title-separator "-")
+  (bibtex-autokey-year-length 4)
+  (bibtex-autokey-names nil)
+  (bibtex-autokey-name-separator "-")
+  (bibtex-autokey-name-year-separator "-")
+  (bibtex-autokey-titleword-separator "-")
+  (bibtex-autokey-titleword-length "All")
+  (bibtex-autokey-titlewords "All")
+  (bibtex-autokey-titleword-ignore "")
+  :config
+  (defun bibtex-generate-autokey ()
+    (let* ((names (bibtex-autokey-get-names))
+           (year (bibtex-autokey-get-year))
+           (title (bibtex-autokey-get-title))
+           (autokey (concat year
+                            (unless (or (equal names "")
+					(equal year ""))
+                              bibtex-autokey-name-year-separator)
+                            names
+                            (unless (or (and (equal names "")
+                                             (equal year ""))
+					(equal title ""))
+                              bibtex-autokey-year-title-separator)
+                            title)))
+      autokey)))
+#+end_src
