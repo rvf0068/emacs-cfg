@@ -298,7 +298,7 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
   (add-hook 'org-mode-hook 'org-fragtog-mode))
 #+end_src
 
-** org-roam
+*** org-roam
 
 https://www.orgroam.com/
 
@@ -337,7 +337,7 @@ https://www.orgroam.com/
 
 This section details the modern completion system composed of Vertico, Orderless, Consult, and Embark.
 
-*** Vertico
+*** vertico
 
 [[https://github.com/minad/vertico][Vertico]] provides a high-performance, vertical completion UI. It is configured here to use =vertico-multiform-mode=, which enables special keymaps for different types of completion. Specifically, it's set to provide an Ido-like experience for file navigation.
 
@@ -358,7 +358,7 @@ Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any s
    '((file (:keymap . vertico-directory-map)))))
 #+end_src
 
-*** Orderless
+*** orderless
 
 [[https://github.com/oantolin/orderless][Orderless]] is a completion style that allows matching items by entering multiple patterns in any order. This provides a more flexible and powerful way to filter candidates compared to standard completion.
 
@@ -370,7 +370,7 @@ Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any s
   (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
 
-*** Consult
+*** consult
 
 [[https://github.com/minad/consult][Consult]] offers a suite of commands that enhance searching and navigation by using the underlying completion system (Vertico). Commands like =consult-line= and =consult-ripgrep= provide an interactive way to find content. A custom function is defined to search within the Org notes directory specifically.
 
@@ -391,7 +391,7 @@ Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any s
       (consult-ripgrep my-notes-directory))))
 #+end_src
 
-*** Embark
+*** embark
 
 [[https://github.com/oantolin/embark][Embark]] provides contextual actions for the item-at-point or for completion candidates in the minibuffer. It allows you to act on targets (files, buffers, commands, etc.) in a consistent way. =embark-consult= provides enhanced integration between the two packages.
 
@@ -463,9 +463,10 @@ cape.el - Completion At Point Extensions
 Note that in order to use a non-English dictionary, it is useful a local variable like =cape-dict-file: "/usr/share/dict/spanish"=.
 
 
+
 ** Development and AI
 
-*** Magit
+*** magit
 
 [[https://magit.vc][Magit]] is a complete text-based user interface for Git inside Emacs, widely considered one of the best Git clients available.
 
@@ -547,9 +548,10 @@ Smartparens is a minor mode for dealing with pairs in Emacs.
 		 :when '(sp-in-math-p)))
 #+end_src
 
+
 ** Academic and Research
 
-*** Citar
+*** citar
 
 [[https://github.com/emacs-citar/citar][Citar]] is a package for finding and acting on bibliographic references from within Emacs. It integrates with the completion system to make inserting citations, opening notes, and accessing associated files seamless.
 
@@ -638,6 +640,7 @@ http://www.zentralblatt-math.org/zmath seems to be down, so I had to configure =
                             title)))
       autokey)))
 #+end_src
+
 ** Python
 
 *** jupyter
