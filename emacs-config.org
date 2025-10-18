@@ -601,3 +601,18 @@ To make it work, I had two manually delete the two copies of the file =emacs-zmq
  #'jupyter-api-http-request
  :around #'my-jupyter-api-http-request--ignore-login-error-a)
 #+end_src
+
+*** ox-ipynb
+
+https://github.com/jkitchin/ox-ipynb
+
+#+begin_quote
+org-mode exporter to Jupyter notebooks
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package ox-ipynb
+  :straight
+  (:host github :repo "jkitchin/ox-ipynb"))
+#+end_src
+
