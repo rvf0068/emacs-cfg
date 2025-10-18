@@ -569,3 +569,35 @@ http://www.zentralblatt-math.org/zmath seems to be down, so I had to configure =
                             title)))
       autokey)))
 #+end_src
+** Python
+
+*** jupyter
+
+https://github.com/emacs-jupyter/jupyter
+
+To make it work, I had two manually delete the two copies of the file =emacs-zmq.so= inside the folder =/straight/build/zmq=. Then, the first time that one uses =emacs-jupyter=, one will be asked if one wants to search for a binary distribution. One should answer "no". This would case a compilation to happen locally.
+
+#+begin_src emacs-lisp
+(use-package jupyter
+  :if (executable-find "jupyter")
+  :straight t
+  :config
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((latex . t)
+     (python . t)
+     (jupyter . t))))
+
+;; see https://github.com/emacs-jupyter/jupyter/issues/500#issuecomment-2323985951
+(defun my-jupyter-api-http-request--ignore-login-error-a
+    (func url endpoint method &rest data)
+  (cond
+   ((member endpoint '("login"))
+    (ignore-error (jupyter-api-http-error)
+      (apply func url endpoint method data)))
+   (:else
+    (apply func url endpoint method data))))
+(advice-add
+ #'jupyter-api-http-request
+ :around #'my-jupyter-api-http-request--ignore-login-error-a)
+#+end_src
