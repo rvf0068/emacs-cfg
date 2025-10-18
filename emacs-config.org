@@ -616,3 +616,12 @@ org-mode exporter to Jupyter notebooks
   (:host github :repo "jkitchin/ox-ipynb"))
 #+end_src
 
+*** eglot
+
+#+begin_src emacs-lisp
+(use-package eglot
+  :straight (:type built-in)
+  :hook (python-mode . eglot-ensure)
+  :config
+  (add-to-list 'eglot-server-programs '(python-mode . ("pylsp"))))
+#+end_src
