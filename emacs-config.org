@@ -462,6 +462,22 @@ This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates 
   :hook (magit-mode . gptel-magit-install))
 #+end_src
 
+*** pdf-tools
+
+https://github.com/vedang/pdf-tools
+
+#+begin_quote
+PDF Tools is, among other things, a replacement of DocView for PDF files. The key difference is that pages are not pre-rendered by e.g. ghostscript and stored in the file-system, but rather created on-demand and stored in memory.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package pdf-tools
+  :if window-system
+  :straight t
+  :config
+  (pdf-tools-install))
+#+end_src
+
 ** Academic and Research
 
 *** Citar
