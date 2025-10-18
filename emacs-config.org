@@ -423,6 +423,46 @@ The description is set to the file name without its extension."
   (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
 
+*** corfu
+
+https://github.com/minad/corfu
+
+#+begin_quote
+corfu.el - COmpletion in Region FUnction
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package corfu
+  :straight t
+  :custom
+  (corfu-auto t)
+  (corfu-auto-prefix 4)
+  :init
+  (global-corfu-mode))
+#+end_src
+
+*** cape
+
+By default, =corfu= works only on =.el= files. For it to be able to complete, say, by the words in a dictionary or words in the buffer, it needs /extensions/ given by =cape=.
+
+https://github.com/minad/cape
+
+#+begin_quote
+cape.el - Completion At Point Extensions
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package cape
+  :straight t
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  ;(add-to-list 'completion-at-point-functions #'cape-dict)
+  )
+#+end_src
+
+Note that in order to use a non-English dictionary, it is useful a local variable like =cape-dict-file: "/usr/share/dict/spanish"=.
+
+
 ** Development and AI
 
 *** Magit
