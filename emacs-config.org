@@ -232,6 +232,8 @@ This section contains the configuration for Org mode, a powerful system for outl
   :bind
   ("C-c a" . org-agenda)
   ("C-c c" . org-capture)
+  :bind (:map org-mode-map
+              ("C-c r" . my/org-insert-smart-ref))
   :init
   (require 'org-habit)
   (require 'org-protocol)
@@ -239,6 +241,8 @@ This section contains the configuration for Org mode, a powerful system for outl
   ;; Helper macro for backend-specific code
   (defmacro by-backend (&rest body)
     `(cl-case org-export-current-backend ,@body))
+  ;; Cross references in org mode
+  (require 'cross-refs)
   ;; GTD system and Inbox.org creation
   (unless (file-exists-p
            (expand-file-name "Inbox.org" my-notes-directory))

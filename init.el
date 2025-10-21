@@ -15,6 +15,9 @@
 ;; I think this gets the latest org
 (straight-use-package 'org)
 
+;; Add our personal lisp directory to the load-path
+(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+
 ;; Set custom-file to avoid cluttering this file with M-x customize changes
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (when (file-exists-p custom-file)
