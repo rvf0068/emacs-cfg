@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: Lemma
+# key: lem
+# expand-env: ((yas-wrap-around-region t))
+# binding: <f6> l
+# condition: (not (org-table-p))
+# group: theorems
+# --
+#+label: lem:`(my/org-snippet-get-unique-label "lem:")`
+#+begin_lemma
+$0
+#+end_lemma

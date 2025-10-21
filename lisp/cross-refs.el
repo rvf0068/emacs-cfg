@@ -1,13 +1,15 @@
-;;; cross-refs.el --- Custom helper functions for cross referencing in Org mode
+;;; cross-refs.el --- Smart cross-reference helpers for Org mode
 
 (defvar my/org-smart-ref-map
   '(("theorem" . "thm:")
     ("definition" . "def:")
     ("lemma" . "lem:")
     ("equation" . "eq:")
+    ("proof" . "prf:")
+    ("corollary" . "cor:")
+    ("proposition" . "pro:")
     ("figure" . "fig:")
-    ("table" . "tbl:")
-    ("proof" . "prf:"))
+    ("table" . "tbl:"))
   "Alist mapping context words to label prefixes for smart referencing.")
 
 (defun my/org-insert-label-ref (prefix)
@@ -38,20 +40,36 @@
           (insert (format "[[%s]]" (cdr (assoc choice stable-label-list)))))))))
 
 (defun my/org-insert-smart-ref ()
-  "Intelligently insert a cross-reference to a #+label:.
-Guesses the label prefix (e.g., 'thm:') based on the word
-preceding point. If no guess is found, prompts for a prefix."
+  "Intelligently insert a cross-reference to a #+label:."
   (interactive)
   (let* ((text-before (buffer-substring-no-properties (line-beginning-position) (point)))
          (word-list (split-string text-before "[^[:word:]_]+" t))
          (last-word (downcase (car (last word-list))))
          (prefix-guess (cdr (assoc last-word my/org-smart-ref-map))))
-
     (if prefix-guess
         (my/org-insert-label-ref prefix-guess)
       (call-interactively 'my/org-insert-label-ref))))
 
-;; This final line is essential for 'require' to work
+(defun my/org-snippet-get-unique-label (prefix)
+  "Prompt for a new snippet label with PREFIX, ensuring it is unique.
+IntDended to be called from a Yasnippet."
+  (let ((new-label nil))
+    (progn
+      (while (progn
+               (setq new-label (read-string (format "Label (%s): " prefix)))
+               (cond
+                ((string-empty-p new-label)
+                 (message "Label cannot be empty. Try again.")
+                 t)
+                ((save-excursion
+                   (goto-char (point-min))
+                   (search-forward-regexp (concat "#\\+label:[ \t]+" (regexp-quote prefix) (regexp-quote new-label)) nil t))
+                 (message "Label '%s%s' already exists! Try again." prefix new-label)
+                 t)
+                (t nil))))
+        nil)
+      new-label))
+
 (provide 'cross-refs)
 
-
+;;; cross-refs.el ends here

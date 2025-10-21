@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: Corollary
+# key: cor
+# expand-env: ((yas-wrap-around-region t))
+# binding: <f6> c
+# condition: (not (org-table-p))
+# group: theorems
+# --
+#+label: cor:`(my/org-snippet-get-unique-label "cor:")`
+#+begin_corollary
+$0
+#+end_corollary

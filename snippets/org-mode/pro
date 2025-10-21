@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: Proposition
+# key: pro
+# expand-env: ((yas-wrap-around-region t))
+# binding: <f6> p
+# condition: (not (org-table-p))
+# group: theorems
+# --
+#+label: pro:`(my/org-snippet-get-unique-label "pro:")`
+#+begin_proposition
+$0
+#+end_proposition

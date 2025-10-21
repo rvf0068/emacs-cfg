@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: Equation
+# key: equ
+# expand-env: ((yas-wrap-around-region t))
+# binding: <f6> e
+# condition: (not (org-table-p))
+# group: theorems
+# --
+#+label: eq:`(my/org-snippet-get-unique-label "eq:")`
+#+begin_equation
+$0
+#+end_equation

@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: Proof
+# key: pf
+# expand-env: ((yas-wrap-around-region t))
+# binding: <f6> f
+# condition: (not (org-table-p))
+# group: theorems
+# --
+#+label: prf:`(my/org-snippet-get-unique-label "prf:")`
+#+begin_proof
+$0
+#+end_proof

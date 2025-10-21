@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: Theorem
+# key: thm
+# expand-env: ((yas-wrap-around-region t))
+# binding: <f6> t
+# condition: (not (org-table-p))
+# group: theorems
+# --
+#+label: thm:`(my/org-snippet-get-unique-label "thm:")`
+#+begin_theorem
+$0
+#+end_theorem

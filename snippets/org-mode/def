@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: Definition
+# key: def
+# expand-env: ((yas-wrap-around-region t))
+# binding: <f6> d
+# condition: (not (org-table-p))
+# group: theorems
+# --
+#+label: def:`(my/org-snippet-get-unique-label "def:")`
+#+begin_definition
+$0
+#+end_definition

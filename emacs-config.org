@@ -466,7 +466,24 @@ cape.el - Completion At Point Extensions
 
 Note that in order to use a non-English dictionary, it is useful a local variable like =cape-dict-file: "/usr/share/dict/spanish"=.
 
+** yasnippet
 
+https://github.com/joaotavora/yasnippet
+
+#+begin_quote
+YASnippet is a template system for Emacs. It allows you to type an abbreviation and automatically expand it into function templates. Bundled language templates include: C, C++, C#, Perl, Python, Ruby, SQL, LaTeX, HTML, CSS and more. The snippet syntax is inspired from TextMate's syntax, you can even import most TextMate templates to YASnippet.
+#+end_quote
+
+Setting =yas-indent-line= to fixed has the effect that the text expanded by a snipped is indented as much as where the snipped is invoked.
+
+#+begin_src emacs-lisp
+(use-package yasnippet
+  :straight t
+  :config
+  (yas-global-mode)
+  :custom
+  (yas-indent-line 'fixed))
+#+end_src
 
 ** Development and AI
 
@@ -551,7 +568,6 @@ Smartparens is a minor mode for dealing with pairs in Emacs.
   (sp-local-pair 'org-mode "|" "|"
 		 :when '(sp-in-math-p)))
 #+end_src
-
 
 ** Academic and Research
 
