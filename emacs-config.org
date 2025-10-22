@@ -26,11 +26,23 @@ Here is a summary of the custom keybindings defined in this configuration.
 | =C-==        | =embark-act=               | Global               |
 | =f7=         | =citar-open=               | Global               |
 | =<f5> b=     | =citar-insert-bibtex=      | Global               |
+| =<f8> f=     | =org-roam-node-find=       | Global               |
+| =<f8> i=     | =org-roam-node-insert=     | Global               |
+| =C-c r=      | =my/org-insert-smart-ref=  | =org-mode=             |
 | =$=          | =math-delimiters-insert=   | =org-mode=, =LaTeX-mode= |
+| =<f5> b=     | =bibretrieve=              | =bibtex-mode=          |
+| =<f5> m=     | =mark-sexp=                | =bibtex-mode=          |
+| =<f6> t=     | `thm` snippet            | =org-mode=             |
+| =<f6> d=     | `def` snippet            | =org-mode=             |
+| =<f6> c=     | `cor` snippet            | =org-mode=             |
+| =<f6> l=     | `lem` snippet            | =org-mode=             |
+| =<f6> e=     | `equ` snippet            | =org-mode=             |
+| =<f6> f=     | `pf` snippet             | =org-mode=             |
+| =<f6> p=     | `pro` snippet            | =org-mode=             |
 
 ** Personal Settings
 
-Loads a separate =personal.org= file for private configurations.
+Loads a separate =personal.org= file for private configurations (like API keys or machine-specific paths).
 
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
@@ -65,7 +77,7 @@ Core settings for Emacs behavior, keybindings, and hooks for fundamental modes.
 
 *** Dired
 
-Dired is the built-in Emacs file manager, documented in the [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html][Emacs manual]]. It provides an interactive buffer where you can act on files and directories. This configuration enables =dired-x=, which provides extra functionality, and sets =dired-dwim-target= to make moving and copying files more intuitive.
+Dired is the built-in Emacs file manager, documented in the [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html][Emacs manual]]. This configuration enables =dired-x= for extra functionality and sets =dired-dwim-target= to make moving and copying files more intuitive.
 
 #+begin_src emacs-lisp
 (use-package dired
@@ -81,7 +93,6 @@ Dired is the built-in Emacs file manager, documented in the [[https://www.gnu.or
 *** mixed-pitch
 
 The [[https://gitlab.com/jabranham/mixed-pitch][mixed-pitch]] package enables a combination of fixed-pitch and variable-pitch fonts in text buffers, which can significantly improve readability.
-
 #+begin_src emacs-lisp
 (use-package mixed-pitch
   :straight t
@@ -95,8 +106,7 @@ This section configures packages for writing and managing LaTeX documents.
 
 *** AUCTeX
 
-[[https://www.gnu.org/software/auctex/][AUCTeX]] is a comprehensive and extensible environment for writing and formatting TeX and LaTeX files in Emacs. The configuration below customizes environments and labels for =reftex= integration.
-
+[[https://www.gnu.org/software/auctex/][AUCTeX]] is a comprehensive environment for writing TeX and LaTeX files. The configuration below customizes environments (like =theorem= and =lemma=) and labels for =reftex= integration.
 #+begin_src emacs-lisp
 (use-package tex
   :straight auctex
@@ -148,8 +158,7 @@ This section configures packages for writing and managing LaTeX documents.
 
 *** cdlatex
 
-See the [[https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex/][cdlatex homepage]]. CDLaTeX is a minor mode for quickly inserting LaTeX environments and mathematical symbols. It is particularly useful in both LaTeX and Org buffers. The =cdlatex-takeover-parenthesis= variable is customized to resolve a [[https://github.com/cdominik/cdlatex/issues/15#issuecomment-864529972][known issue]].
-
+[[https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex/][CDLaTeX]] is a minor mode for quickly inserting LaTeX environments and mathematical symbols in both LaTeX and Org buffers. It is particularly useful in both LaTeX and Org buffers. The =cdlatex-takeover-parenthesis= variable is customized to resolve a [[https://github.com/cdominik/cdlatex/issues/15#issuecomment-864529972][known issue]].
 The following table summarizes the custom math symbol additions.
 
 | Trigger Key | First Expansion | Second Expansion | Third Expansion     |
@@ -161,7 +170,7 @@ The following table summarizes the custom math symbol additions.
 | =O=           | =\Omega=          | =\mathrm{Orb}=     |                     |
 | =S=           | =\Sigma=          | =\mathrm{Stab}=    |                     |
 | =T=           | =\bigtriangleup=  |                  |                     |
-| =-=           | =\cap=            | =\leftrightarrow=  | =\longleftrightarrow= |
+| ~-~           | =\cap=            | =\leftrightarrow=  | =\longleftrightarrow= |
 | =.=           | =\ldots=          | =\cdots=           | =\cdot=               |
 | =*=           | =\times=          | =\otimes=          |                     |
 | =<=           | =\leq=            | =\langle=          | =\trianglelefteq=     |
@@ -203,8 +212,7 @@ The following table summarizes the custom math symbol additions.
 
 *** math-delimiters
 
-The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package provides convenient commands for inserting TeX/LaTeX math delimiters like parentheses and brackets. It is configured to take over the =$= key in both Org and LaTeX modes.
-
+The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package provides commands for inserting TeX/LaTeX math delimiters. It is configured to take over the =$= key in Org and LaTeX modes, unbinding it from =cdlatex-mode-map= where it would conflict.
 #+begin_src emacs-lisp
 (use-package math-delimiters
   :straight (:host github :repo "oantolin/math-delimiters")
@@ -222,9 +230,12 @@ The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package pro
 
 ** Org Mode
 
-https://orgmode.org/
+This section contains the configuration for [[https://orgmode.org][Org mode]], a powerful system for outlining, note-taking, project planning, and authoring.
 
-This section contains the configuration for Org mode, a powerful system for outlining, note-taking, project planning, and authoring.
+This configuration loads a custom helper file, =cross-refs.el=, which defines functions to enable a smart cross-referencing system.
+- =my/org-insert-smart-ref= (bound to =C-c r r=) intelligently guesses the type of reference to insert (e.g., `thm:`, `def:`) based on the preceding word.
+- This system works with a custom set of Yasnippet snippets (bound to =<f6> <key>=) that insert theorem-like environments (see =yasnippet= section).
+- The snippets use the helper function =my/org-snippet-get-unique-label= from =cross-refs.el= to prompt for a label and ensure it is not a duplicate before insertion.
 
 #+begin_src emacs-lisp
 (use-package org
@@ -241,9 +252,12 @@ This section contains the configuration for Org mode, a powerful system for outl
   ;; Helper macro for backend-specific code
   (defmacro by-backend (&rest body)
     `(cl-case org-export-current-backend ,@body))
+
   ;; Cross references in org mode
   (require 'cross-refs)
+
   ;; GTD system and Inbox.org creation
+  ;; Note: 'my-notes-directory' is set in personal.org
   (unless (file-exists-p
            (expand-file-name "Inbox.org" my-notes-directory))
     (write-region "" nil (expand-file-name "Inbox.org" my-notes-directory)))
@@ -270,6 +284,7 @@ This section contains the configuration for Org mode, a powerful system for outl
   (set-face-attribute 'org-level-4 nil :height 1.1)
   (set-face-attribute 'org-document-title nil :height 1.75)
   :custom
+  ;; Note: 'my-bibliography' is set in personal.org
   (org-cite-global-bibliography `(,my-bibliography))
   (org-export-with-tags nil)
   (org-file-apps
@@ -289,7 +304,7 @@ This section contains the configuration for Org mode, a powerful system for outl
 
 *** org-fragtog
 
-The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the experience of working with LaTeX in Org mode by automatically toggling fragment previews as the cursor moves in and out of them. The default scale is increased for better visibility.
+The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the experience of working with LaTeX in Org mode by automatically toggling fragment previews as the cursor moves in and out of them. The scale is increased for visibility.
 
 #+begin_src emacs-lisp
 (use-package org-fragtog
@@ -306,7 +321,7 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
 
 https://www.orgroam.com/
 
-=org-roam-completion-everywhere= set to =t=, causes completion in org mode files to create links after typing few characters.
+Org Roam is a note-taking tool for networked thought. It's configured to use the notes directory from =personal.org= and provides custom templates for literature notes and projects.
 
 #+begin_src emacs-lisp
 (use-package org-roam
@@ -316,6 +331,7 @@ https://www.orgroam.com/
   (("<f8> f" . org-roam-node-find))
   (("<f8> i" . org-roam-node-insert))
   :custom
+  ;; Note: 'my-notes-directory' is set in personal.org
   (org-roam-directory my-notes-directory)
   (org-roam-completion-everywhere t)
   :init
@@ -343,9 +359,7 @@ This section details the modern completion system composed of Vertico, Orderless
 
 *** vertico
 
-[[https://github.com/minad/vertico][Vertico]] provides a high-performance, vertical completion UI. It is configured here to use =vertico-multiform-mode=, which enables special keymaps for different types of completion. Specifically, it's set to provide an Ido-like experience for file navigation.
-
-Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any selected completion candidates.
+[[https://github.com/minad/vertico][Vertico]] provides a high-performance, vertical completion UI. It is configured to use =vertico-multiform-mode= to provide an Ido-like experience for file navigation.
 
 #+begin_src emacs-lisp
 (use-package vertico
@@ -364,7 +378,7 @@ Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any s
 
 *** orderless
 
-[[https://github.com/oantolin/orderless][Orderless]] is a completion style that allows matching items by entering multiple patterns in any order. This provides a more flexible and powerful way to filter candidates compared to standard completion.
+[[https://github.com/oantolin/orderless][Orderless]] is a completion style that allows matching items by entering multiple patterns in any order.
 
 #+begin_src emacs-lisp
 (use-package orderless
@@ -376,7 +390,7 @@ Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any s
 
 *** consult
 
-[[https://github.com/minad/consult][Consult]] offers a suite of commands that enhance searching and navigation by using the underlying completion system (Vertico). Commands like =consult-line= and =consult-ripgrep= provide an interactive way to find content. A custom function is defined to search within the Org notes directory specifically.
+[[https://github.com/minad/consult][Consult]] offers a suite of commands that enhance searching and navigation, such as =consult-line= and =consult-ripgrep=. A custom function, =bms/org-roam-rg-search=, is defined to search specifically within the Org notes directory (path set in =personal.org=).
 
 #+begin_src emacs-lisp
 (use-package consult
@@ -392,14 +406,13 @@ Note that =M-RET= accepts the exact text typed in the minibuffer, ignoring any s
     (interactive)
     (let ((consult-ripgrep-command
 	   "rg --null --ignore-case --type org --line-buffered --color=always --max-columns=500 --no-heading --line-number . -e ARG OPTS"))
+      ;; Note: 'my-notes-directory' is set in personal.org
       (consult-ripgrep my-notes-directory))))
 #+end_src
 
 *** embark
 
-[[https://github.com/oantolin/embark][Embark]] provides contextual actions for the item-at-point or for completion candidates in the minibuffer. It allows you to act on targets (files, buffers, commands, etc.) in a consistent way. =embark-consult= provides enhanced integration between the two packages.
-
-For example, I can run ~embark-act~ (bound to ~C-=~) on a pdf-file on ~dired~, and get a menu where I can choose ~x~ to open the file in the external viewer.
+[[https://github.com/oantolin/embark][Embark]] provides contextual actions for the item-at-point or for completion candidates. A custom Embark action, =my-embark-org-insert-link=, is defined to insert an Org-mode link to a file, bound to =L= in the `embark-file-map`.
 
 #+begin_src emacs-lisp
 (use-package embark
@@ -429,11 +442,7 @@ The description is set to the file name without its extension."
 
 *** corfu
 
-https://github.com/minad/corfu
-
-#+begin_quote
-corfu.el - COmpletion in Region FUnction
-#+end_quote
+[[https://github.com/minad/corfu][Corfu]] (COmpletion in Region FUnction) provides an in-buffer completion UI, which is set to activate automatically.
 
 #+begin_src emacs-lisp
 (use-package corfu
@@ -447,13 +456,7 @@ corfu.el - COmpletion in Region FUnction
 
 *** cape
 
-By default, =corfu= works only on =.el= files. For it to be able to complete, say, by the words in a dictionary or words in the buffer, it needs /extensions/ given by =cape=.
-
-https://github.com/minad/cape
-
-#+begin_quote
-cape.el - Completion At Point Extensions
-#+end_quote
+[[https://github.com/minad/cape][Cape]] (Completion At Point Extensions) provides backends for Corfu, allowing it to complete words from the current buffer (=cape-dabbrev=). Note that in order to use a non-English dictionary, it is useful a local variable like =cape-dict-file: "/usr/share/dict/spanish"=.
 
 #+begin_src emacs-lisp
 (use-package cape
@@ -464,17 +467,13 @@ cape.el - Completion At Point Extensions
   )
 #+end_src
 
-Note that in order to use a non-English dictionary, it is useful a local variable like =cape-dict-file: "/usr/share/dict/spanish"=.
+*** yasnippet
 
-** yasnippet
-
-https://github.com/joaotavora/yasnippet
-
-#+begin_quote
-YASnippet is a template system for Emacs. It allows you to type an abbreviation and automatically expand it into function templates. Bundled language templates include: C, C++, C#, Perl, Python, Ruby, SQL, LaTeX, HTML, CSS and more. The snippet syntax is inspired from TextMate's syntax, you can even import most TextMate templates to YASnippet.
-#+end_quote
-
-Setting =yas-indent-line= to fixed has the effect that the text expanded by a snipped is indented as much as where the snipped is invoked.
+[[https://github.com/joaotavora/yasnippet][YASnippet]] is a template system for Emacs, used here to insert environments for academic writing.
+- This configuration is linked to the =cross-refs.el= helper library.
+- Custom snippets for `thm`, `def`, `lem`, `cor`, `pro`, `pf`, and `equ` are defined in the `~/snippets/org-mode` directory.
+- These snippets are bound to =<f6> <key>= (e.g., =<f6> t= for `thm`).
+- When expanded, they call the function =my/org-snippet-get-unique-label= to prompt for a unique label, preventing duplicates.
 
 #+begin_src emacs-lisp
 (use-package yasnippet
@@ -489,8 +488,7 @@ Setting =yas-indent-line= to fixed has the effect that the text expanded by a sn
 
 *** magit
 
-[[https://magit.vc][Magit]] is a complete text-based user interface for Git inside Emacs, widely considered one of the best Git clients available.
-
+[[https://magit.vc][Magit]] is a complete text-based user interface for Git inside Emacs.
 #+begin_src emacs-lisp
 (use-package magit
   :straight t
@@ -499,10 +497,7 @@ Setting =yas-indent-line= to fixed has the effect that the text expanded by a sn
 
 *** gptel
 
-GPTel provides an interface to Large Language Models (LLMs) directly within Emacs. It's configured to disable extra reasoning in responses to ensure compatibility with extensions like =gptel-magit=.
-
-https://github.com/karthink/gptel
-
+[[https://github.com/karthink/gptel][GPTel]] provides an interface to Large Language Models (LLMs) directly within Emacs. It is configured here, but the API key is set in the private =personal.org= file.
 #+begin_src emacs-lisp
 (use-package gptel
   :straight t
@@ -516,8 +511,7 @@ https://github.com/karthink/gptel
 
 *** gptel-magit
 
-This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates GPTel with Magit, allowing for the automatic generation of Git commit messages based on the staged changes. It is automatically activated whenever Magit is used.
-
+This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates GPTel with Magit, allowing for the automatic generation of Git commit messages based on staged changes.
 #+begin_src emacs-lisp
 (use-package gptel-magit
   :straight t
@@ -526,12 +520,7 @@ This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates 
 
 *** pdf-tools
 
-https://github.com/vedang/pdf-tools
-
-#+begin_quote
-PDF Tools is, among other things, a replacement of DocView for PDF files. The key difference is that pages are not pre-rendered by e.g. ghostscript and stored in the file-system, but rather created on-demand and stored in memory.
-#+end_quote
-
+[[https://github.com/vedang/pdf-tools][PDF Tools]] is a replacement for DocView for PDF files, which renders pages on-demand and stores them in memory.
 #+begin_src emacs-lisp
 (use-package pdf-tools
   :if window-system
@@ -542,11 +531,7 @@ PDF Tools is, among other things, a replacement of DocView for PDF files. The ke
 
 *** smartparens
 
-https://github.com/Fuco1/smartparens
-
-#+begin_quote
-Smartparens is a minor mode for dealing with pairs in Emacs.
-#+end_quote
+[[https://github.com/Fuco1/smartparens][Smartparens]] is a minor mode for managing paired delimiters. It is configured to ignore =$= (handled by =math-delimiters=) and to correctly handle Org mode's verbatim (=) and math (|) delimiters.
 
 #+begin_src emacs-lisp
 (use-package smartparens
@@ -573,7 +558,7 @@ Smartparens is a minor mode for dealing with pairs in Emacs.
 
 *** citar
 
-[[https://github.com/emacs-citar/citar][Citar]] is a package for finding and acting on bibliographic references from within Emacs. It integrates with the completion system to make inserting citations, opening notes, and accessing associated files seamless.
+[[https://github.com/emacs-citar/citar][Citar]] is a package for finding and acting on bibliographic references. It is configured to use the bibliography and notes paths defined in =personal.org=.
 
 #+begin_src emacs-lisp
 (use-package citar
@@ -582,6 +567,8 @@ Smartparens is a minor mode for dealing with pairs in Emacs.
   ([(f7)] . citar-open)
   ("<f5> b" . citar-insert-bibtex)
   :custom
+  ;; Note: 'my-bibliography', 'my-library-path', and 'my-notes-directory'
+  ;; are all set in personal.org
   (citar-bibliography my-bibliography)
   (citar-library-paths `(,my-library-path))
   (citar-notes-paths `(,my-notes-directory)))
@@ -589,11 +576,7 @@ Smartparens is a minor mode for dealing with pairs in Emacs.
 
 **** citar-org-roam
 
-https://github.com/emacs-citar/citar-org-roam
-
-#+begin_quote
-citar/org-roam integration
-#+end_quote
+[[https://github.com/emacs-citar/citar-org-roam][Citar-org-roam]] integrates Citar with Org Roam. It is set to use the "r" template key from the Org Roam configuration.
 
 #+begin_src emacs-lisp
 (use-package citar-org-roam
@@ -607,13 +590,7 @@ citar/org-roam integration
 
 *** bibretrieve
 
-https://github.com/pzorin/bibretrieve
-
-#+begin_quote
-An Emacs library for searching and downloading BibTeX entries from the web.
-#+end_quote
-
-http://www.zentralblatt-math.org/zmath seems to be down, so I had to configure =bibretrieve-backends=.
+[[https://github.com/pzorin/bibretrieve][Bibretrieve]] is a library for searching and downloading BibTeX entries. It is configured to use the "mrl" backend, as the default (Zentralblatt MATH) appears to be down.
 
 #+begin_src emacs-lisp
 (use-package bibretrieve
@@ -624,7 +601,7 @@ http://www.zentralblatt-math.org/zmath seems to be down, so I had to configure =
 
 *** bibtex
 
-=bibtex-mode= is built-in. I redefine =bibtex-generate-autokey= to get BibTeX key in the format: year-author-title.
+=bibtex-mode= is built-in and configured to use =bibretrieve=. A custom function, =bibtex-generate-autokey=, is defined to format BibTeX keys as =year-author-title=.
 
 #+begin_src emacs-lisp
 (use-package bibtex
@@ -665,9 +642,7 @@ http://www.zentralblatt-math.org/zmath seems to be down, so I had to configure =
 
 *** jupyter
 
-https://github.com/emacs-jupyter/jupyter
-
-To make it work, I had two manually delete the two copies of the file =emacs-zmq.so= inside the folder =/straight/build/zmq=. Then, the first time that one uses =emacs-jupyter=, one will be asked if one wants to search for a binary distribution. One should answer "no". This would case a compilation to happen locally.
+[[https://github.com/emacs-jupyter/jupyter][Jupyter]] integration for Emacs. A custom workaround is implemented to handle a login error. Also, to make it work in my computer, I had two manually delete the two copies of the file =emacs-zmq.so= inside the folder =/straight/build/zmq=. Then, the first time that one uses =emacs-jupyter=, one will be asked if one wants to search for a binary distribution. One should answer "no". This would case a compilation to happen locally.
 
 #+begin_src emacs-lisp
 (use-package jupyter
@@ -696,11 +671,7 @@ To make it work, I had two manually delete the two copies of the file =emacs-zmq
 
 *** ox-ipynb
 
-https://github.com/jkitchin/ox-ipynb
-
-#+begin_quote
-org-mode exporter to Jupyter notebooks
-#+end_quote
+[[https://github.com/jkitchin/ox-ipynb][ox-ipynb]] provides an Org mode exporter for creating Jupyter notebooks.
 
 #+begin_src emacs-lisp
 (use-package ox-ipynb
@@ -709,6 +680,8 @@ org-mode exporter to Jupyter notebooks
 #+end_src
 
 *** eglot
+
+=eglot= is the built-in Emacs LSP client. It is configured to auto-start for Python mode using =pylsp=.
 
 #+begin_src emacs-lisp
 (use-package eglot
