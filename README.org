@@ -1,0 +1,13 @@
+#+TITLE: My Emacs Configuration 🚀
+#+AUTHOR: rvf0068
+#+DESCRIPTION: A literate Emacs setup, tuned for mathematics and development.
+
+Welcome! 🤓 This is my personal Emacs configuration, designed to be a comfortable and productive environment, especially for my work in **mathematics** and general programming.
+
+This configuration is built using a **literate programming** approach. 📖 Almost all of the setup lives inside the =emacs-config.org= file. This means every setting and piece of code is documented in plain English, making it easy to understand and maintain. The =init.el= file is kept minimal—its only job is to load this Org file.
+
+A primary goal here is to create a first-class environment for academic writing and **mathematics**. 🧑‍🏫 This config includes a robust setup for **AUCTeX**, which provides a powerful, seamless experience for writing LaTeX documents. It's tuned for easily handling complex formulas, (like $ \sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6} $), managing citations, and previewing your work. But it is also configured for producing mathematical texts using *org-mode*.
+
+Beyond LaTeX, the setup also includes **YASnippet** for powerful, time-saving code and text templates ⚡ (you can see custom ones in the =snippets/= directory). It also loads custom helper functions from the =lisp/= directory to add unique behaviors and streamline common tasks.
+
+To use this, simply clone the repository into your =~/.emacs.d= directory. The next time you start Emacs, it will automatically bootstrap, install the required packages, and tangle the =emacs-config.org= file. Enjoy! 😊
