@@ -484,6 +484,21 @@ The description is set to the file name without its extension."
   (yas-indent-line 'fixed))
 #+end_src
 
+*** marginalia
+
+https://github.com/minad/marginalia
+
+#+begin_quote
+marginalia.el - Marginalia in the minibuffer
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package marginalia
+  :straight t
+  :init
+  (marginalia-mode))
+#+end_src
+
 ** Development and AI
 
 *** magit
