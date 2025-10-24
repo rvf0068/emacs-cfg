@@ -589,6 +589,20 @@ This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates 
   (citar-notes-paths `(,my-notes-directory)))
 #+end_src
 
+**** citar-embark
+
+This adds actions to the =embark= menu that results when running it in a =citar= list. For example, =e= opens the bibtex file in the corresponding entry.
+
+#+begin_src emacs-lisp
+(use-package citar-embark
+  :straight t
+  :after (citar embark)
+  :no-require
+  :custom
+  (citar-at-point-function 'embark-act)
+  :config (citar-embark-mode))
+#+end_src
+
 **** citar-org-roam
 
 [[https://github.com/emacs-citar/citar-org-roam][Citar-org-roam]] integrates Citar with Org Roam. It is set to use the "r" template key from the Org Roam configuration.
