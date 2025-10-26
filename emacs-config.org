@@ -353,6 +353,26 @@ Org Roam is a note-taking tool for networked thought. It's configured to use the
          :unnarrowed t))))
 #+end_src
 
+*** org-noter
+
+By default =C-M-.= is bound to =org-noter-sync-current-note=.
+
+https://github.com/org-noter/org-noter
+
+#+begin_src emacs-lisp
+(use-package org-noter
+  :straight
+  (:repo "org-noter/org-noter"
+         :host github
+         :type git
+         :files ("*.el" "modules/*.el"))
+  :after (org pdf-tools)
+  :bind (("<f5> n" . org-noter))
+  :custom
+  (org-noter-auto-save-last-location t)
+  (org-noter-notes-search-path `(,my-notes-directory)))
+#+end_src
+
 ** Completion and Navigation
 
 This section details the modern completion system composed of Vertico, Orderless, Consult, and Embark.
