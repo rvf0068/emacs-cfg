@@ -13,12 +13,15 @@
   "Alist mapping context words to label prefixes for smart referencing.")
 
 (defun my/org-insert-label-ref (prefix)
-  "Insert a link to a #+label: label, filtered by PREFIX."
+  "Insert a link to a #+label: or \\label{} label, filtered by PREFIX."
   (let ((labels '())
-        (regex (concat "^[ \t]*#\\+label:[ \t]+\\(\\(" (regexp-quote prefix) "[^ \t\n\r]+\\)\\)")))
+        ;; Match both #+label: and \label{} formats
+        (regex-orgmode (concat "^[ \t]*#\\+label:[ \t]+\\(\\(" (regexp-quote prefix) "[^ \t\n\r]+\\)\\)"))
+        (regex-latex (concat "\\\\label{\\(\\(" (regexp-quote prefix) "[^}]+\\)\\)}")))
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward regex nil t)
+      ;; Search for #+label: style
+      (while (re-search-forward regex-orgmode nil t)
         (let ((label (match-string 1)))
           (let ((preview ""))
             (save-excursion
@@ -30,6 +33,21 @@
                   (setq preview (string-trim (buffer-substring-no-properties
                                               (line-beginning-position)
                                               (line-end-position)))))))
+            (push (cons (format "%-20s  %s" label preview) label) labels))))
+      ;; Search for \label{} style
+      (goto-char (point-min))
+      (while (re-search-forward regex-latex nil t)
+        (let ((label (match-string 1)))
+          (let ((preview ""))
+            (save-excursion
+              ;; Try to get some context from the same line or next line
+              (goto-char (match-beginning 0))
+              (let ((line-content (buffer-substring-no-properties
+                                   (line-beginning-position)
+                                   (line-end-position))))
+                ;; Extract some math content as preview
+                (when (string-match "[^\\\\]+$" line-content)
+                  (setq preview (string-trim (match-string 0 line-content))))))
             (push (cons (format "%-20s  %s" label preview) label) labels)))))
 
     (if (null labels)
@@ -61,9 +79,13 @@ IntDended to be called from a Yasnippet."
                 ((string-empty-p new-label)
                  (message "Label cannot be empty. Try again.")
                  t)
-                ((save-excursion
-                   (goto-char (point-min))
-                   (search-forward-regexp (concat "#\\+label:[ \t]+" (regexp-quote prefix) (regexp-quote new-label)) nil t))
+                ;; Check both #+label: and \label{} formats
+                ((or (save-excursion
+                       (goto-char (point-min))
+                       (search-forward-regexp (concat "#\\+label:[ \t]+" (regexp-quote prefix) (regexp-quote new-label)) nil t))
+                     (save-excursion
+                       (goto-char (point-min))
+                       (search-forward-regexp (concat "\\\\label{" (regexp-quote prefix) (regexp-quote new-label) "}") nil t)))
                  (message "Label '%s%s' already exists! Try again." prefix new-label)
                  t)
                 (t nil))))
