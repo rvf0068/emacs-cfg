@@ -4,7 +4,21 @@
 ;; - Special blocks (theorem, definition, etc.): Use both #+name: and #+label:
 ;;   #+name: is for org internal linking, #+label: exports to LaTeX \label{}
 ;; - Equations: Use only #+name:
-;;   Org-mode automatically generates \label{} from #+name: during export
+;;   Org-mode auto-generates \label{} from #+name: during export
+;;   An export filter converts \ref{eq:*} to \eqref{eq:*} in LaTeX output
+
+;; Export filter to convert \ref{eq:*} to \eqref{eq:*} in LaTeX
+(with-eval-after-load 'ox-latex
+  (defun my/org-latex-filter-eqref (text backend info)
+    "Convert \\ref{eq:...} to \\eqref{eq:...} in LaTeX export."
+    (when (org-export-derived-backend-p backend 'latex)
+      (replace-regexp-in-string
+       "\\\\ref{\\(eq:[^}]+\\)}"
+       "\\\\eqref{\\1}"
+       text)))
+
+  (add-to-list 'org-export-filter-final-output-functions
+               #'my/org-latex-filter-eqref))
 
 (defvar my/org-smart-ref-map
   '(("theorem" . "thm:")
