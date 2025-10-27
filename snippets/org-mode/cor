@@ -6,7 +6,8 @@
 # condition: (not (org-table-p))
 # group: theorems
 # --
-#+label: cor:`(my/org-snippet-get-unique-label "cor:")`
+#+name: cor:`(setq yas-text (my/org-snippet-get-unique-label "cor:"))`
+#+label: cor:`yas-text`
 #+begin_corollary
 $0
 #+end_corollary

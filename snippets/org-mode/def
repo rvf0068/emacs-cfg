@@ -6,7 +6,8 @@
 # condition: (not (org-table-p))
 # group: theorems
 # --
-#+label: def:`(my/org-snippet-get-unique-label "def:")`
+#+name: def:`(setq yas-text (my/org-snippet-get-unique-label "def:"))`
+#+label: def:`yas-text`
 #+begin_definition
 $0
 #+end_definition

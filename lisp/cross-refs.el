@@ -1,5 +1,12 @@
 ;;; cross-refs.el --- Smart cross-reference helpers for Org mode
 
+;; Label conventions:
+;; - Special blocks (theorem, definition, etc.): Use both #+name: and #+label:
+;;   #+name: is for org internal linking, #+label: exports to LaTeX \label{}
+;; - Equations: Use only #+name:
+;;   Org-mode automatically generates \label{} from #+name: during export
+;;   Adding manual \label{} inside creates duplicate labels
+
 (defvar my/org-smart-ref-map
   '(("theorem" . "thm:")
     ("definition" . "def:")
@@ -13,15 +20,16 @@
   "Alist mapping context words to label prefixes for smart referencing.")
 
 (defun my/org-insert-label-ref (prefix)
-  "Insert a link to a #+label: or \\label{} label, filtered by PREFIX."
+  "Insert a link to a #+label:, #+name:, or \\label{} label, filtered by PREFIX."
   (let ((labels '())
-        ;; Match both #+label: and \label{} formats
-        (regex-orgmode (concat "^[ \t]*#\\+label:[ \t]+\\(\\(" (regexp-quote prefix) "[^ \t\n\r]+\\)\\)"))
+        ;; Match #+label:, #+name:, and \label{} formats
+        (regex-label (concat "^[ \t]*#\\+label:[ \t]+\\(\\(" (regexp-quote prefix) "[^ \t\n\r]+\\)\\)"))
+        (regex-name (concat "^[ \t]*#\\+name:[ \t]+\\(\\(" (regexp-quote prefix) "[^ \t\n\r]+\\)\\)"))
         (regex-latex (concat "\\\\label{\\(\\(" (regexp-quote prefix) "[^}]+\\)\\)}")))
     (save-excursion
       (goto-char (point-min))
       ;; Search for #+label: style
-      (while (re-search-forward regex-orgmode nil t)
+      (while (re-search-forward regex-label nil t)
         (let ((label (match-string 1)))
           (let ((preview ""))
             (save-excursion
@@ -34,21 +42,38 @@
                                               (line-beginning-position)
                                               (line-end-position)))))))
             (push (cons (format "%-20s  %s" label preview) label) labels))))
+      ;; Search for #+name: style
+      (goto-char (point-min))
+      (while (re-search-forward regex-name nil t)
+        (let ((label (match-string 1)))
+          (unless (assoc label labels) ; Avoid duplicates if both #+name and #+label exist
+            (let ((preview ""))
+              (save-excursion
+                (goto-char (match-end 0))
+                (when (re-search-forward "^[ \t]*#\\+begin_" nil t)
+                  (when (re-search-forward "^[ \t]*\\S-"
+                                           (save-excursion (re-search-forward "^[ \t]*#\\+end_") (point))
+                                           t)
+                    (setq preview (string-trim (buffer-substring-no-properties
+                                                (line-beginning-position)
+                                                (line-end-position)))))))
+              (push (cons (format "%-20s  %s" label preview) label) labels)))))
       ;; Search for \label{} style
       (goto-char (point-min))
       (while (re-search-forward regex-latex nil t)
         (let ((label (match-string 1)))
-          (let ((preview ""))
-            (save-excursion
-              ;; Try to get some context from the same line or next line
-              (goto-char (match-beginning 0))
-              (let ((line-content (buffer-substring-no-properties
-                                   (line-beginning-position)
-                                   (line-end-position))))
-                ;; Extract some math content as preview
-                (when (string-match "[^\\\\]+$" line-content)
-                  (setq preview (string-trim (match-string 0 line-content))))))
-            (push (cons (format "%-20s  %s" label preview) label) labels)))))
+          (unless (assoc label labels) ; Avoid duplicates
+            (let ((preview ""))
+              (save-excursion
+                ;; Try to get some context from the same line or next line
+                (goto-char (match-beginning 0))
+                (let ((line-content (buffer-substring-no-properties
+                                     (line-beginning-position)
+                                     (line-end-position))))
+                  ;; Extract some math content as preview
+                  (when (string-match "[^\\\\]+$" line-content)
+                    (setq preview (string-trim (match-string 0 line-content))))))
+              (push (cons (format "%-20s  %s" label preview) label) labels))))))
 
     (if (null labels)
         (message "No labels found matching '%s'." prefix)
@@ -79,10 +104,13 @@ IntDended to be called from a Yasnippet."
                 ((string-empty-p new-label)
                  (message "Label cannot be empty. Try again.")
                  t)
-                ;; Check both #+label: and \label{} formats
+                ;; Check #+label:, #+name:, and \label{} formats
                 ((or (save-excursion
                        (goto-char (point-min))
                        (search-forward-regexp (concat "#\\+label:[ \t]+" (regexp-quote prefix) (regexp-quote new-label)) nil t))
+                     (save-excursion
+                       (goto-char (point-min))
+                       (search-forward-regexp (concat "#\\+name:[ \t]+" (regexp-quote prefix) (regexp-quote new-label)) nil t))
                      (save-excursion
                        (goto-char (point-min))
                        (search-forward-regexp (concat "\\\\label{" (regexp-quote prefix) (regexp-quote new-label) "}") nil t)))

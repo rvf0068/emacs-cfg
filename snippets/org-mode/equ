@@ -6,7 +6,7 @@
 # condition: (not (org-table-p))
 # group: theorems
 # --
+#+name: eq:`(my/org-snippet-get-unique-label "eq:")`
 \begin{equation}
-\label{eq:`(my/org-snippet-get-unique-label "eq:")`}
 $0
 \end{equation}
