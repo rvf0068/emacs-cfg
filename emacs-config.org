@@ -619,7 +619,7 @@ This adds actions to the =embark= menu that results when running it in a =citar=
   :after (citar embark org)
   :custom
   (citar-at-point-function 'embark-act)
-  :config (citar-embark-mode))
+  :hook (org-mode . (lambda () (citar-embark-mode 1))))
 #+end_src
 
 **** citar-org-roam
