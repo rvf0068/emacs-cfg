@@ -616,7 +616,7 @@ This adds actions to the =embark= menu that results when running it in a =citar=
 #+begin_src emacs-lisp
 (use-package citar-embark
   :straight t
-  :after (citar embark)
+  :after (citar embark org)
   :custom
   (citar-at-point-function 'embark-act)
   :config (citar-embark-mode))
