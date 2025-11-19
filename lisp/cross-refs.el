@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 ;;; cross-refs.el --- Smart cross-reference helpers for Org mode
 
 ;; Label conventions:
