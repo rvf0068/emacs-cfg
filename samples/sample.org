@@ -87,7 +87,7 @@ a=b
 G/H=G_{x}
 \end{equation}
 
-The formula \(\mathrm{Orb}(x) \times \mathrm{Stab}(x) \simeq G\) (Equation [[eq:orbit-stabilizer]]) relates the Orbit and Stabilizer of an element \(x\).
+The formula \(\mathrm{Orb}(x) \times \mathrm{Stab}(x) \simeq G\). Equation [[eq:orbit-stabilizer]] relates the Orbit and Stabilizer of an element \(x\).
 
 #+name: thm:yoneda
 #+label: thm:yoneda
@@ -96,3 +96,24 @@ Any representable functor is nice.
 #+end_theorem
 
 We will use next Theorem [[thm:yoneda]]. We reference Lemma [[lem:cancellation-law]] again.
+
+We want to insert a new theorem with =F6 t=:
+
+#+name: thm:new
+#+label: thm:new
+#+begin_theorem
+A new theorem.
+#+end_theorem
+
+#+name: def:group
+#+label: def:group
+#+begin_definition
+
+#+end_definition
+
+#+name: eq:newest
+\begin{equation}
+2+2=4
+\end{equation}
+
+We reference Theorem [[thm:new]].

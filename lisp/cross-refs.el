@@ -105,14 +105,14 @@ Intended to be called from a Yasnippet."
                (message "Label cannot be empty. Try again.")
                t)
               ;; Check both #+label: and #+name: formats
-              ((or (save-excursion
+              ((save-excursion
                      (goto-char (point-min))
                      (re-search-forward (concat "^[ \t]*#\\+\\(label\\|name\\):[ \t]+" 
                                                 (regexp-quote prefix) 
                                                 (regexp-quote new-label) 
                                                 "[ \t]*$") nil t))
-                   (message "Label '%s%s' already exists! Try again." prefix new-label)
-                   t))
+               (message "Label '%s%s' already exists! Try again." prefix new-label)
+               t)
               (t nil))))
     new-label))
 
