@@ -689,6 +689,16 @@ This adds actions to the =embark= menu that results when running it in a =citar=
 
 ** Python
 
+*** uv environment
+
+This helper function automatically detects and activates the python environment created by =uv= if a =.venv= directory exists in the project root.
+
+#+begin_src emacs-lisp
+(require 'uv-env)
+(add-hook 'python-mode-hook #'my/find-uv-venv)
+(add-hook 'org-mode-hook #'my/find-uv-venv)
+#+end_src
+
 *** jupyter
 
 [[https://github.com/emacs-jupyter/jupyter][Jupyter]] integration for Emacs. A custom workaround is implemented to handle a login error. Also, to make it work in my computer, I had two manually delete the two copies of the file =emacs-zmq.so= inside the folder =/straight/build/zmq=. Then, the first time that one uses =emacs-jupyter=, one will be asked if one wants to search for a binary distribution. One should answer "no". This would case a compilation to happen locally.
