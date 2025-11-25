@@ -1,0 +1,98 @@
+#+title: Mathematical Org-Mode
+#+AUTHOR: author
+#+date: 2025-10-21
+
+#+latex_header: \usepackage{amsmath}
+#+latex_header: \usepackage{amsthm}
+#+latex_header: \usepackage{amssymb}
+#+latex_header: \newtheorem{theorem}{Theorem}
+#+latex_header: \newtheorem{lemma}[theorem]{Lemma}
+#+latex_header: \newtheorem{corollary}[theorem]{Corollary}
+#+latex_header: \newtheorem{definition}{Definition}
+
+
+* Introduction to Algebraic Structures
+
+This document uses the Emacs configuration, tailored for academic writing, to efficiently define and reference mathematical concepts. The custom keybindings and snippets streamline the creation of structured, citable content.
+
+* The Group Axioms
+
+The study of algebraic structures begins with the notion of a group. This block uses the definition environment.
+
+#+label: def:group-axioms
+#+name: def:group-axioms
+#+begin_definition
+A *group* is a set \(G\) together with a binary operation \(*\) (called the group operation) that satisfies the four fundamental properties: closure, associativity, identity, and inverses.
+#+end_definition
+
+The set of integers \(\mathbb{Z}\) (inserted via CDLaTeX) under addition is a classic example.
+
+* Theorems on Group Uniqueness
+
+We state a fundamental result regarding the uniqueness of the identity and inverse.
+
+#+label: thm:identity-and-inverse-uniqueness
+#+name: thm:identity-and-inverse-uniqueness
+#+begin_theorem
+In a group \((G, *)\), the identity element is unique, and for each element \(a \in G\), the inverse element is unique.
+#+end_theorem
+
+** Proof of Uniqueness (using *Proof* block)
+
+#+label: pf:identity-uniqueness-proof
+#+name: pf:identity-uniqueness-proof
+#+begin_proof
+The identity element is unique. Assume \(e\) and \(e'\) are both identity elements in \(G\).
+Since \(e\) is an identity element, \(e * e' = e'\).
+Since \(e'\) is an identity element, \(e * e' = e\).
+Thus, \(e = e'\), proving the identity element is unique. The full proof is detailed in our Org Roam Note: [[roam:some-math-note]].
+#+end_proof
+
+* Corollaries and Lemmas
+
+The following corollary is a direct result of Theorem [[thm:identity-and-inverse-uniqueness]]
+
+#+label: cor:inverse-of-inverse
+#+name: cor:inverse-of-inverse
+#+begin_corollary
+For any element \(a\) in a group \(G\), the inverse of the inverse is the element itself, i.e., \((a^{-1})^{-1} = a\).
+#+end_corollary
+
+Before a more complicated theorem, we need a technical lemma.
+
+#+label: lem:cancellation-law
+#+name: lem:cancellation-law
+#+begin_lemma
+If \(a, b, c\) are elements of a group \(G\) such that \(a*b = a*c\), then \(b=c\). This is the left cancellation law.
+#+end_lemma
+
+* Conclusion and Displayed Math
+
+The *left cancellation law* (see Lemma [[lem:cancellation-law]]) is crucial for proving the uniqueness property (discussed in Theorem [[thm:identity-and-inverse-uniqueness]]). We also saw the Definition [[def:group-axioms]] of a group, which is a key concept.
+
+To display an equation block, we use the LaTeX export block.
+
+#+name: eq:first
+\begin{equation}
+e^{2\pi i}=1
+\end{equation}
+
+#+name: eq:second
+\begin{equation}
+a=b
+\end{equation}
+
+#+name: eq:orbit-stabilizer
+\begin{equation}
+G/H=G_{x}
+\end{equation}
+
+The formula \(\mathrm{Orb}(x) \times \mathrm{Stab}(x) \simeq G\) (Equation [[eq:orbit-stabilizer]]) relates the Orbit and Stabilizer of an element \(x\).
+
+#+name: thm:yoneda
+#+label: thm:yoneda
+#+begin_theorem
+Any representable functor is nice.
+#+end_theorem
+
+We will use next Theorem [[thm:yoneda]]. We reference Lemma [[lem:cancellation-law]] again.
