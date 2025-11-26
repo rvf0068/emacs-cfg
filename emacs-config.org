@@ -307,12 +307,15 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
 The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the experience of working with LaTeX in Org mode by automatically toggling fragment previews as the cursor moves in and out of them. The scale is increased for visibility.
 
 #+begin_src emacs-lisp
+(defvar my-latex-preview-scale 1.5
+  "Scale factor for LaTeX previews. Can be overridden in personal.org.")
+
 (use-package org-fragtog
   :straight t
   :after org
   :custom
   (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}"))
-  (org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+  (org-format-latex-options (plist-put org-format-latex-options :scale my-latex-preview-scale))
   :init
   (add-hook 'org-mode-hook 'org-fragtog-mode))
 #+end_src
