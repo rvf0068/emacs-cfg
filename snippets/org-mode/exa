@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: Example
+# key: exa
+# expand-env: ((yas-wrap-around-region t))
+# binding: <f6> x
+# condition: (not (org-table-p))
+# group: theorems
+# --
+#+name: exa:`(setq yas-text (my/org-snippet-get-unique-label "exa:"))`
+#+label: exa:`yas-text`
+#+begin_exampleblock
+$0
+#+end_exampleblock

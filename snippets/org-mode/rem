@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: Remark
+# key: rem
+# expand-env: ((yas-wrap-around-region t))
+# binding: <f6> r
+# condition: (not (org-table-p))
+# group: theorems
+# --
+#+name: rem:`(setq yas-text (my/org-snippet-get-unique-label "rem:"))`
+#+label: rem:`yas-text`
+#+begin_remark
+$0
+#+end_remark

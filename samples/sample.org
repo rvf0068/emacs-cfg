@@ -9,7 +9,8 @@
 #+latex_header: \newtheorem{lemma}[theorem]{Lemma}
 #+latex_header: \newtheorem{corollary}[theorem]{Corollary}
 #+latex_header: \newtheorem{definition}{Definition}
-
+#+latex_header: \newtheorem{exampleblock}{Example}
+#+latex_header: \newtheorem{remark}{Remark}
 
 * Introduction to Algebraic Structures
 
@@ -26,6 +27,29 @@ A *group* is a set \(G\) together with a binary operation \(*\) (called the grou
 #+end_definition
 
 The set of integers \(\mathbb{Z}\) (inserted via CDLaTeX) under addition is a classic example.
+
+#+name: exa:symmetric
+#+label: exa:symmetric
+#+begin_exampleblock
+The symmetric group \(S_n\).
+#+end_exampleblock
+
+Another example:
+
+#+name: exa:alternating
+#+label: exa:alternating
+#+begin_exampleblock
+The alternating group \(A_{n}\).
+#+end_exampleblock
+
+
+We make a remark:
+
+#+name: rem:other
+#+label: rem:other
+#+begin_remark
+There are many other examples.
+#+end_remark
 
 * Theorems on Group Uniqueness
 
@@ -108,7 +132,7 @@ A new theorem.
 #+name: def:group
 #+label: def:group
 #+begin_definition
-
+New definition.
 #+end_definition
 
 #+name: eq:newest

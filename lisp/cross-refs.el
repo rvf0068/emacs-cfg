@@ -31,7 +31,9 @@
     ("corollary" . "cor:")
     ("proposition" . "pro:")
     ("figure" . "fig:")
-    ("table" . "tbl:"))
+    ("table" . "tbl:")
+    ("example" . "exa:")
+    ("remark" . "rem:"))
   "Alist mapping context words to label prefixes for smart referencing.")
 
 (defun my/org-insert-label-ref (prefix)
