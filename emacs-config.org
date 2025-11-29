@@ -228,6 +228,16 @@ The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package pro
     (define-key LaTeX-mode-map "$" #'math-delimiters-insert)))
 #+end_src
 
+*** math-shortcuts
+
+This custom minor mode allows for quick insertion of standard math sets ($\mathbb{R}, \mathbb{Q}, \mathbb{C}$, etc.) by simply pressing the corresponding capital letter while inside a math environment.
+
+#+begin_src emacs-lisp
+(require 'math-shortcuts)
+(add-hook 'LaTeX-mode-hook #'math-shortcuts-mode)
+(add-hook 'org-mode-hook #'math-shortcuts-mode)
+#+end_src
+
 ** Org Mode
 
 This section contains the configuration for [[https://orgmode.org][Org mode]], a powerful system for outlining, note-taking, project planning, and authoring.
@@ -314,7 +324,7 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
   :straight t
   :after org
   :custom
-  (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}"))
+  (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"))
   (org-format-latex-options (plist-put org-format-latex-options :scale my-latex-preview-scale))
   :init
   (add-hook 'org-mode-hook 'org-fragtog-mode))
