@@ -761,5 +761,11 @@ This helper function automatically detects and activates the python environment 
   :straight (:type built-in)
   :hook (python-mode . eglot-ensure)
   :config
-  (add-to-list 'eglot-server-programs '(python-mode . ("pylsp"))))
+  (add-to-list 'eglot-server-programs '(python-mode . ("pylsp")))
+
+  ;; Tell default linters to allow 88 characters
+  (setq-default eglot-workspace-configuration
+		'(:pylsp (:plugins (
+				    :pycodestyle (:maxLineLength 88)
+						 :flake8 (:maxLineLength 88))))))
 #+end_src
