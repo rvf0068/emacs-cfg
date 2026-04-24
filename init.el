@@ -17,6 +17,10 @@
 ;; I think this gets the latest org
 (straight-use-package 'org)
 
+;; Ensure straight manages transient so Magit gets the required version,
+;; overriding the potentially outdated built-in.
+(straight-use-package 'transient)
+
 ;; Add our personal lisp directory to the load-path
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
