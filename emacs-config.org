@@ -759,7 +759,9 @@ This helper function automatically detects and activates the python environment 
 #+begin_src emacs-lisp
 (use-package eglot
   :straight (:type built-in)
-  :hook (python-mode . eglot-ensure)
+  :hook
+  (python-mode . eglot-ensure)
+  (python-ts-mode . eglot-ensure)
   :config
   (add-to-list 'eglot-server-programs '(python-mode . ("pylsp")))
 
