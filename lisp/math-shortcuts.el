@@ -15,9 +15,20 @@
    (t nil)))
 
 (defun math-shortcuts--insert-mathbb (char)
-  "Insert \\mathbb{CHAR} if in math mode, otherwise insert CHAR."
+  "Insert \\mathbb{CHAR} if in math mode, otherwise insert CHAR.
+If \\mathbb{CHAR} is already the text immediately before point,
+delete it and insert the plain CHAR instead."
   (if (math-shortcuts--in-math-p)
-      (insert (format "\\mathbb{%c}" char))
+      (let* ((mathbb-str (format "\\mathbb{%c}" char))
+             (len (length mathbb-str))
+             (start (- (point) len)))
+        (if (and (>= start (point-min))
+                 (string= (buffer-substring-no-properties start (point))
+                          mathbb-str))
+            (progn
+              (delete-char (- len))
+              (insert (char-to-string char)))
+          (insert mathbb-str)))
     (call-interactively #'self-insert-command)))
 
 (defvar math-shortcuts-mode-map (make-sparse-keymap)
