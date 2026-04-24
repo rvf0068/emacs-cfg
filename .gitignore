@@ -4,7 +4,10 @@
 /ido.last
 /personal.*
 /recentf
-/straight/
+straight/*
+!straight/versions/
+straight/versions/*
+!straight/versions/default.el
 /transient/
 /bookmarks
 /emacs-config.pdf
