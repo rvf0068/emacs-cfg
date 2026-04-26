@@ -328,8 +328,11 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
   :straight t
   :after org
   :custom
-  (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"))
+  (org-preview-latex-default-process 'xelatex)
   (org-format-latex-options (plist-put org-format-latex-options :scale my-latex-preview-scale))
+  :config
+  (setq org-format-latex-header
+        (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"))
   :init
   (add-hook 'org-mode-hook 'org-fragtog-mode))
 #+end_src
