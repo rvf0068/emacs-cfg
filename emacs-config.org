@@ -66,6 +66,9 @@ Core settings for Emacs behavior, keybindings, and hooks for fundamental modes.
   (confirm-nonexistent-file-or-buffer nil)
   (frame-title-format "%b: %+%+ %f")
   (mouse-drag-copy-region t)
+  ;; reading buffer and file names are case insensitive
+  (read-buffer-completion-ignore-case t)
+  (read-file-name-completion-ignore-case t)
   :hook
   (prog-mode . flyspell-prog-mode)
   (text-mode . abbrev-mode)
