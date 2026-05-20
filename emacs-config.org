@@ -66,6 +66,9 @@ Core settings for Emacs behavior, keybindings, and hooks for fundamental modes.
   (confirm-nonexistent-file-or-buffer nil)
   (frame-title-format "%b: %+%+ %f")
   (mouse-drag-copy-region t)
+  ;; reading buffer and file names are case insensitive
+  (read-buffer-completion-ignore-case t)
+  (read-file-name-completion-ignore-case t)
   :hook
   (prog-mode . flyspell-prog-mode)
   (text-mode . abbrev-mode)
@@ -325,9 +328,13 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
   :straight t
   :after org
   :custom
+  (org-preview-latex-default-process 'xelatex)
   (org-preview-latex-image-directory "~/Documents/org-latex-previews/")
   (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"))
   (org-format-latex-options (plist-put org-format-latex-options :scale my-latex-preview-scale))
+  :config
+  (setq org-format-latex-header
+        (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"))
   :init
   (add-hook 'org-mode-hook 'org-fragtog-mode))
 #+end_src
@@ -741,6 +748,14 @@ This helper function automatically detects and activates the python environment 
 (advice-add
  #'jupyter-api-http-request
  :around #'my-jupyter-api-http-request--ignore-login-error-a)
+
+;; see https://github.com/emacs-jupyter/jupyter/issues/613
+(defun jupyter-get-client ()
+  "Return a monadic value that returns the client."
+  (jupyter-mlet* ((state  (jupyter-get-state))
+                 (client (jupyter-return (if (listp state) (car state) state))))
+    (cl-check-type client jupyter-kernel-client)
+    (jupyter-return client)))
 #+end_src
 
 *** ox-ipynb
