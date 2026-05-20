@@ -321,7 +321,7 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
 The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the experience of working with LaTeX in Org mode by automatically toggling fragment previews as the cursor moves in and out of them. The scale is increased for visibility.
 
 #+begin_src emacs-lisp
-(defvar my-latex-preview-scale 1.5
+(defvar my-latex-preview-scale 1.4
   "Scale factor for LaTeX previews. Can be overridden in personal.org.")
 
 (use-package org-fragtog
@@ -329,6 +329,8 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
   :after org
   :custom
   (org-preview-latex-default-process 'xelatex)
+  (org-preview-latex-image-directory "~/Documents/org-latex-previews/")
+  (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"))
   (org-format-latex-options (plist-put org-format-latex-options :scale my-latex-preview-scale))
   :config
   (setq org-format-latex-header
@@ -365,11 +367,11 @@ Org Roam is a note-taking tool for networked thought. It's configured to use the
            :unnarrowed t
            :immediate-finish t)
         ("r" "literature note" plain
-         "%?"
+         "- tags ::\n- keywords :: \n\n* Org noter notes\n  :PROPERTIES:\n  :Custom_ID: ${citar-citekey}\n  :URL: \n  :AUTHOR: ${citar-author}\n  :NOTER_DOCUMENT: %(expand-file-name \"${citar-citekey}.pdf\" my-library-path)\n  :NOTER_PAGE:\n  :END:\n\n* ${citar-title}\n\n* dummy\n\n[[bibliographystyle:alpha]]\n[[bibliography:rvf.bib]]\n\n\n* COMMENT Local Variables\n\n# Local variables:\n# org-confirm-babel-evaluate: nil\n# eval: (org-babel-lob-ingest \"options.org\")\n# eval: (org-sbe filter)\n# End:\n"
          :target
          (file+head
           "%(expand-file-name (or citar-org-roam-subdir \"\") org-roam-directory)/${citar-citekey}.org"
-          "#+title: (${citar-date}) ${note-title}.\n\n#+created: %U\n#+last_modified: %U\n\n")
+          "#+title: ${note-title}\n#+setupfile: options.org\n")
          :unnarrowed t))))
 #+end_src
 
@@ -653,7 +655,7 @@ This adds actions to the =embark= menu that results when running it in a =citar=
   :after (citar org-roam)
   :config
   (citar-org-roam-mode)
-  (setq citar-org-roam-note-title-template "${title} by ${author}")
+  (setq citar-org-roam-note-title-template "${title}, by ${author}")
   (setq citar-org-roam-capture-template-key "r"))
 #+end_src
 
