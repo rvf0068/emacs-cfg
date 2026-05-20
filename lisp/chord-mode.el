@@ -18,6 +18,8 @@
 ;; (december 6, 2011): chordpack can be found at
 ;; http://sites.google.com/site/danpolansky/chordpack
 
+;; (april 26, 2026): modernized with the help of Claude AI
+
 ;;; Code:
 
 (require 'generic)
