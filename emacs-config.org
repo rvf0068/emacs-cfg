@@ -305,7 +305,7 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
    '((auto-mode . emacs)
      ("pdf" . "evince %s")))
   (org-hide-emphasis-markers t)
-  (org-latex-compiler "xelatex")
+  (org-latex-compiler "lualatex")
   (org-log-done 'note)
   (org-return-follows-link t)
   (org-src-preserve-indentation t)
@@ -321,7 +321,7 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
 The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the experience of working with LaTeX in Org mode by automatically toggling fragment previews as the cursor moves in and out of them. The scale is increased for visibility.
 
 #+begin_src emacs-lisp
-(defvar my-latex-preview-scale 1.4
+(defvar my-latex-preview-scale 1
   "Scale factor for LaTeX previews. Can be overridden in personal.org.")
 
 (use-package org-fragtog
