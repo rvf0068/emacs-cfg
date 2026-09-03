@@ -141,3 +141,9 @@ New definition.
 \end{equation}
 
 We reference Theorem [[thm:new]].
+
+A book reference: [cite:@1967-quillen-homotopical-algebra]
+
+* Bibliography
+
+#+print_bibliography:

@@ -300,6 +300,11 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
   :custom
   ;; Note: 'my-bibliography' is set in personal.org
   (org-cite-global-bibliography `(,my-bibliography))
+  ;; LaTeX/PDF use biblatex's default style (via latexmk+biber); other
+  ;; backends (HTML, Markdown, ...) keep org-cite's built-in "basic" style.
+  (org-cite-export-processors
+   '((latex biblatex)
+     (t basic)))
   (org-export-with-tags nil)
   (org-file-apps
    '((auto-mode . emacs)
