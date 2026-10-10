@@ -761,6 +761,25 @@ This helper function automatically detects and activates the python environment 
                  (client (jupyter-return (if (listp state) (car state) state))))
     (cl-check-type client jupyter-kernel-client)
     (jupyter-return client)))
+
+;; trying to make corfu happy inside blocks
+;; 1. Silence the completion function itself
+(defun my-safe-jupyter-org-completion-at-point (orig-fun &rest args)
+  "Catch and suppress errors in `jupyter-org-completion-at-point`."
+  (condition-case nil
+      (apply orig-fun args)
+    (error nil)))
+
+(advice-add 'jupyter-org-completion-at-point :around #'my-safe-jupyter-org-completion-at-point)
+
+;; 2. Silence the specific caching function throwing the markerp nil error
+(defun my-safe-jupyter-org-set-src-block-cache (orig-fun &rest args)
+  "Catch markerp errors when Jupyter tries to cache incomplete org blocks."
+  (condition-case nil
+      (apply orig-fun args)
+    (error nil)))
+
+(advice-add 'jupyter-org--set-src-block-cache :around #'my-safe-jupyter-org-set-src-block-cache)
 #+end_src
 
 *** ox-ipynb
