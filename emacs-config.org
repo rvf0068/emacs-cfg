@@ -306,6 +306,9 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
    '((latex biblatex)
      (t basic)))
   (org-export-with-tags nil)
+  (org-beamer-environments-extra
+   '(("lemma" "l" "\\begin{lemma}%a[%h]%l" "\\end{lemma}")
+     ("corollary" "c" "\\begin{corollary}%a[%h]%l" "\\end{corollary}")))
   (org-file-apps
    '((auto-mode . emacs)
      ("pdf" . "evince %s")))
