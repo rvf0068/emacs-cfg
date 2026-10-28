@@ -341,8 +341,20 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
   (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"))
   (org-format-latex-options (plist-put org-format-latex-options :scale my-latex-preview-scale))
   :config
+  ;; Previews use an article class, but #+setupfile headers may contain beamer
+  ;; commands; stub them so xelatex doesn't abort (no .xdv produced).
   (setq org-format-latex-header
-        (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"))
+        (concat org-format-latex-header
+                "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"
+                "\n\\makeatletter"
+                "\n\\providecommand{\\usefonttheme}[2][]{}"
+                "\n\\providecommand{\\usebeamerfont}{\\@ifstar\\@gobble\\@gobble}"
+                "\n\\providecommand{\\usebeamercolor}[2][]{}"
+                "\n\\providecommand{\\usebeamertemplate}{\\@ifstar\\@gobble\\@gobble}"
+                "\n\\providecommand{\\setbeamertemplate}[2]{}"
+                "\n\\providecommand{\\setbeamerfont}[2]{}"
+                "\n\\providecommand{\\setbeamercolor}[2]{}"
+                "\n\\makeatother"))
   :init
   (add-hook 'org-mode-hook 'org-fragtog-mode))
 #+end_src
