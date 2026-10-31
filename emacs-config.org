@@ -575,24 +575,83 @@ marginalia.el - Marginalia in the minibuffer
 *** gptel
 
 [[https://github.com/karthink/gptel][GPTel]] provides an interface to Large Language Models (LLMs) directly within Emacs. It is configured here, but the API key is set in the private =personal.org= file.
+
 #+begin_src emacs-lisp
 (use-package gptel
   :straight t
   :defer t
   :custom
   (gptel-default-mode 'org-mode)
-  (gptel-include-reasoning nil)
+  ;(gptel-include-reasoning nil)
   :bind
   ("C-c g" . gptel))
+#+end_src
+
+*** Fix gptel-magit with ChatGPT Plus OAuth
+
+#+begin_src emacs-lisp
+(defun rvf/gptel-magit-stream-callback
+    (original chunks response info)
+  "Collect streamed responses for gptel-magit."
+  (cond
+   ((stringp response)
+    (setcar chunks (cons response (car chunks))))
+   ((eq response t)
+    (if (car chunks)
+        (funcall original
+                 (mapconcat #'identity
+                            (nreverse (car chunks)) "")
+                 info)
+      (message "gptel-magit: No response text received")))
+   ((null response)
+    (message "gptel-magit request failed: %s"
+             (or (plist-get info :status)
+                 "unknown status")))
+   ((eq response 'abort)
+    (message "gptel-magit: Request aborted"))))
+
+(defun rvf/gptel-magit-stream-request
+    (orig prompt &rest options)
+  "Force streaming and collect the response."
+  (let ((callback (plist-get options :callback)))
+    (if (not callback)
+        (apply orig prompt options)
+      (setq options
+            (plist-put
+             options :callback
+             (apply-partially
+              #'rvf/gptel-magit-stream-callback
+              callback (list nil))))
+      (setq options (plist-put options :stream t))
+      (let ((gptel-stream t)
+            (gptel-use-curl t))
+        (apply orig prompt options)))))
+
+(with-eval-after-load 'gptel-magit
+  (unless (advice-member-p
+           #'rvf/gptel-magit-stream-request
+           'gptel-magit--request)
+    (advice-add
+     'gptel-magit--request :around
+     #'rvf/gptel-magit-stream-request)))
 #+end_src
 
 *** gptel-magit
 
 This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates GPTel with Magit, allowing for the automatic generation of Git commit messages based on staged changes.
+# #+begin_src emacs-lisp
+# (use-package gptel-magit
+#   :straight t
+#   :hook (magit-mode . gptel-magit-install))
+# #+end_src
+
 #+begin_src emacs-lisp
 (use-package gptel-magit
   :straight t
-  :hook (magit-mode . gptel-magit-install))
+  :custom
+  (gptel-magit-model 'gpt-6.1-sol)
+  :hook
+  (magit-mode . gptel-magit-install))
 #+end_src
 
 *** pdf-tools
