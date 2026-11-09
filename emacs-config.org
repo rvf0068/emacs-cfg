@@ -313,7 +313,7 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
    '((auto-mode . emacs)
      ("pdf" . "evince %s")))
   (org-hide-emphasis-markers t)
-  (org-latex-compiler "lualatex")
+  (org-latex-compiler "pdflatex")
   (org-log-done 'note)
   (org-return-follows-link t)
   (org-src-preserve-indentation t)
@@ -324,27 +324,23 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
   (org-babel-after-execute . org-redisplay-inline-images))
 #+end_src
 
-*** org-fragtog
+*** LaTeX previews
 
-The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the experience of working with LaTeX in Org mode by automatically toggling fragment previews as the cursor moves in and out of them. The scale is increased for visibility.
+Org's built-in =org-latex-preview-mode= automatically toggles previews while editing and previews newly inserted fragments. The personal setting =my-latex-preview-scale= controls image resolution. The =dvisvgm= backend uses pdfLaTeX by default, enabling faster previews through precompilation. Org files can override the compiler with =#+LATEX_COMPILER=; LuaLaTeX and XeLaTeX do not support preview precompilation.
 
 #+begin_src emacs-lisp
 (defvar my-latex-preview-scale 1
   "Scale factor for LaTeX previews. Can be overridden in personal.org.")
 
-(use-package org-fragtog
-  :straight t
-  :after org
-  :custom
-  (org-preview-latex-default-process 'xelatex)
-  (org-preview-latex-image-directory "~/Documents/org-latex-previews/")
-  (org-format-latex-header (concat org-format-latex-header "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"))
-  (org-format-latex-options (plist-put org-format-latex-options :scale my-latex-preview-scale))
-  :config
-  ;; Previews use an article class, but #+setupfile headers may contain beamer
-  ;; commands; stub them so xelatex doesn't abort (no .xdv produced).
-  (setq org-format-latex-header
-        (concat org-format-latex-header
+(require 'org-latex-preview)
+(setq org-latex-preview-process-default 'dvisvgm
+      org-latex-preview-process-precompile t
+      org-preview-latex-image-directory "~/Documents/org-latex-previews/")
+(setf (plist-get org-latex-preview-appearance-options :scale) my-latex-preview-scale)
+;; Previews use an article class, but #+setupfile headers may contain beamer
+;; commands; stub them so the preview compiler doesn't abort.
+(setq org-latex-preview-preamble
+        (concat org-latex-preview-preamble
                 "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"
                 "\n\\makeatletter"
                 "\n\\providecommand{\\usefonttheme}[2][]{}"
@@ -355,8 +351,7 @@ The [[https://github.com/io12/org-fragtog][org-fragtog]] package enhances the ex
                 "\n\\providecommand{\\setbeamerfont}[2]{}"
                 "\n\\providecommand{\\setbeamercolor}[2]{}"
                 "\n\\makeatother"))
-  :init
-  (add-hook 'org-mode-hook 'org-fragtog-mode))
+(add-hook 'org-mode-hook #'org-latex-preview-mode)
 #+end_src
 
 *** org-roam
