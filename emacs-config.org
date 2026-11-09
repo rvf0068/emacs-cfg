@@ -846,12 +846,13 @@ This helper function automatically detects and activates the python environment 
 
 (advice-add 'jupyter-org-completion-at-point :around #'my-safe-jupyter-org-completion-at-point)
 
-;; 2. Silence the specific caching function throwing the markerp nil error
+;; 2. Avoid Jupyter cache lookups outside Org and suppress marker errors
 (defun my-safe-jupyter-org-set-src-block-cache (orig-fun &rest args)
-  "Catch markerp errors when Jupyter tries to cache incomplete org blocks."
-  (condition-case nil
-      (apply orig-fun args)
-    (error nil)))
+  "Run ORIG-FUN with ARGS only in Org, catching incomplete-block errors."
+  (when (derived-mode-p 'org-mode)
+    (condition-case nil
+        (apply orig-fun args)
+      (error nil))))
 
 (advice-add 'jupyter-org--set-src-block-cache :around #'my-safe-jupyter-org-set-src-block-cache)
 #+end_src
