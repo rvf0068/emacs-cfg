@@ -1,5 +1,9 @@
 ;; -*- lexical-binding: t; -*-
 
+;; Async native compilation of packages emits many harmless "function not
+;; known to be defined" warnings (cross-file references); keep them quiet.
+(setq native-comp-async-report-warnings-errors 'silent)
+
 ;; Bootstrap straight.el package manager
 (defvar bootstrap-version)
 (let ((bootstrap-file
