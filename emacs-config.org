@@ -564,6 +564,10 @@ marginalia.el - Marginalia in the minibuffer
 #+begin_src emacs-lisp
 (use-package magit
   :straight t
+  :init
+  ;; Work around a void-variable error in magit-autorevert when magit is
+  ;; loaded after init (the globalized mode variable is not yet defined).
+  (defvar magit-auto-revert-mode t)
   :bind ("C-c m" . magit-status))
 #+end_src
 
