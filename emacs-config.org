@@ -638,6 +638,10 @@ marginalia.el - Marginalia in the minibuffer
 *** gptel-magit
 
 This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates GPTel with Magit, allowing for the automatic generation of Git commit messages based on staged changes.
+The installed version uses an obsolete =when-let= macro.  A local compatibility
+fix patches straight.el's build copy after each rebuild, without modifying the
+upstream checkout.  Compilation is disabled for this small package so the fix
+is applied before the source is loaded.
 # #+begin_src emacs-lisp
 # (use-package gptel-magit
 #   :straight t
@@ -645,8 +649,15 @@ This [[https://github.com/ragnard/gptel-magit][gptel-magit]] package integrates 
 # #+end_src
 
 #+begin_src emacs-lisp
+(require 'gptel-magit-compat)
+
 (use-package gptel-magit
-  :straight t
+  :straight (gptel-magit
+             :type git :host github :repo "ragnard/gptel-magit"
+             :build (:not compile native-compile)
+             :post-build (rvf/gptel-magit-fix-when-let))
+  :init
+  (rvf/gptel-magit-fix-when-let)
   :custom
   (gptel-magit-model 'gpt-6.1-sol)
   :hook
