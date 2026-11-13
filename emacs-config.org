@@ -360,10 +360,13 @@ https://www.orgroam.com/
 
 Org Roam is a note-taking tool for networked thought. It's configured to use the notes directory from =personal.org= and provides custom templates for literature notes and projects.
 
+File-node titles should come only from the note itself, not from its =#+setupfile= directives. After enabling this change, run =C-u M-x org-roam-db-sync= once to rebuild existing cached titles.
+
 #+begin_src emacs-lisp
 (use-package org-roam
   :straight t
   :after org
+  :demand t
   :bind
   (("<f8> f" . org-roam-node-find))
   (("<f8> i" . org-roam-node-insert))
@@ -371,9 +374,10 @@ Org Roam is a note-taking tool for networked thought. It's configured to use the
   ;; Note: 'my-notes-directory' is set in personal.org
   (org-roam-directory my-notes-directory)
   (org-roam-completion-everywhere t)
-  :init
-  (org-roam-db-autosync-mode)
   :config
+  (require 'org-roam-local-title)
+  (advice-add 'org-roam-db--file-title :override #'rvf/org-roam-db-local-file-title)
+  (org-roam-db-autosync-mode)
   (setq org-roam-capture-templates
         '(("d" "project" plain
            "\n* Goals\n%?\n* Tasks\n\n** TODO Add initial tasks\n\n* Dates\n\n"
