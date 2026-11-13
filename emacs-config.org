@@ -702,6 +702,60 @@ is applied before the source is loaded.
 
 ** Academic and Research
 
+*** Elfeed
+
+[[https://github.com/emacs-elfeed/elfeed][Elfeed]] displays RSS and Atom feeds. Following [[https://tony-zorman.com/posts/elfeed-latex.html][LaTeX Previews for Elfeed]], Org's LaTeX previewer renders math in both search results and opened posts, for all feeds. This uses the same preview backend and LaTeX setup as Org above, including the need for a LaTeX compiler and =dvisvgm=. Literal dollar-delimited text may also be interpreted as math.
+
+#+begin_src emacs-lisp
+(use-package elfeed
+  :straight t
+  :commands elfeed)
+#+end_src
+
+The installed Elfeed version refreshes entry buffers through =elfeed-show-refresh= rather than an update hook. Preview only the redrawn line when an individual search entry changes.
+
+#+name: elfeed-latex-previews
+#+begin_src emacs-lisp
+;; Adapted from https://tony-zorman.com/posts/elfeed-latex.html
+;; Preview all feeds, and use refresh advice for the installed Elfeed version.
+(defun my/elfeed-latex-preview (&optional beg end)
+  "Preview LaTeX fragments between BEG and END in the current buffer."
+  (interactive)
+  (save-excursion
+    (save-restriction
+      (when (and beg end)
+        (narrow-to-region beg end))
+      (with-syntax-table (copy-syntax-table)
+        (modify-syntax-entry ?- ".")
+        (let ((entries
+               (cl-loop for (_ regexp group _) in org-latex-regexps
+                        append (cl-loop initially (goto-char (point-min))
+                                        while (re-search-forward regexp nil t)
+                                        collect (list (match-beginning group)
+                                                      (match-end group))))))
+          (when entries
+            (org-latex-preview-place org-latex-preview-process-default entries)))))))
+
+(defun my/elfeed-latex-preview-entry (entry)
+  "Preview the search line redrawn for ENTRY."
+  (when-let* ((index (cl-position entry elfeed-search-entries)))
+    (save-excursion
+      (goto-char (point-min))
+      (forward-line (+ elfeed-search--offset index -1))
+      (my/elfeed-latex-preview (line-beginning-position) (line-end-position)))))
+
+(defun my/elfeed-latex-preview-show (&rest _)
+  "Preview the refreshed Elfeed entry buffer."
+  (my/elfeed-latex-preview))
+
+(with-eval-after-load 'elfeed-search
+  (add-hook 'elfeed-search-update-hook #'my/elfeed-latex-preview)
+  (advice-add 'elfeed-search-update-entry :after #'my/elfeed-latex-preview-entry))
+
+(with-eval-after-load 'elfeed-show
+  (advice-add 'elfeed-show-refresh :after #'my/elfeed-latex-preview-show))
+#+end_src
+
 *** citar
 
 [[https://github.com/emacs-citar/citar][Citar]] is a package for finding and acting on bibliographic references. It is configured to use the bibliography and notes paths defined in =personal.org=.
