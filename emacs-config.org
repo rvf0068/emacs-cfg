@@ -322,6 +322,10 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
   (org-mode . turn-on-auto-revert-mode)
   (org-mode . org-cdlatex-mode)
   (org-babel-after-execute . org-redisplay-inline-images))
+
+;; Makes the Beamer entries appear in the C-c C-e export dispatcher.
+(with-eval-after-load 'org
+  (require 'ox-beamer))
 #+end_src
 
 *** LaTeX previews
