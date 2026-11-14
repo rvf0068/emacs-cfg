@@ -780,16 +780,18 @@ The installed Elfeed version refreshes entry buffers through =elfeed-show-refres
 
 **** citar-embark
 
-This adds actions to the =embark= menu that results when running it in a =citar= list. For example, =e= opens the bibtex file in the corresponding entry.
+This adds actions to the =embark= menu for Citar candidates and citations at
+point. It loads when Embark loads, so =C-== recognizes citations even before
+another Citar command has been used. For example, =e= opens the BibTeX entry.
 
 #+begin_src emacs-lisp
 (use-package citar-embark
   :straight t
-  :after (citar embark)
-  :no-require
+  :after embark
+  :demand t
   :custom
   (citar-at-point-function 'embark-act)
-  :config (citar-embark-mode))
+  :config (citar-embark-mode 1))
 #+end_src
 
 **** citar-org-roam
