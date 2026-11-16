@@ -215,21 +215,19 @@ The following table summarizes the custom math symbol additions.
 
 *** math-delimiters
 
-The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package provides commands for inserting TeX/LaTeX math delimiters. It is configured to take over the =$= key in Org and LaTeX modes, unbinding it from =cdlatex-mode-map= where it would conflict.
+The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package provides commands for inserting TeX/LaTeX math delimiters. The =$= key is bound in Org and AUCTeX LaTeX modes before the package is loaded, and unbound from =cdlatex-mode-map= where it would conflict.
 
 #+begin_src emacs-lisp
 (use-package math-delimiters
   :straight (:host github :repo "oantolin/math-delimiters")
-  :after (org cdlatex)
-  :bind (:map org-mode-map
-              ("$" . math-delimiters-insert))
-  :config
-  ;; Unbind $ in cdlatex-mode-map (when cdlatex is loaded)
-  (with-eval-after-load 'cdlatex
-    (define-key cdlatex-mode-map "$" nil))
-  ;; Bind $ in LaTeX-mode-map (when latex is loaded)
+  :commands math-delimiters-insert
+  :init
+  (with-eval-after-load 'org
+    (define-key org-mode-map "$" #'math-delimiters-insert))
   (with-eval-after-load 'latex
-    (define-key LaTeX-mode-map "$" #'math-delimiters-insert)))
+    (define-key LaTeX-mode-map "$" #'math-delimiters-insert))
+  (with-eval-after-load 'cdlatex
+    (define-key cdlatex-mode-map "$" nil)))
 #+end_src
 
 *** math-shortcuts
