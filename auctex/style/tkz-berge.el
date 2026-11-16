@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (TeX-add-style-hook "tkz-berge"
   (function
    (lambda ()

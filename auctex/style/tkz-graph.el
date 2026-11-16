@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (TeX-add-style-hook "tkz-graph"
   (function
    (lambda ()

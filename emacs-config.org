@@ -216,6 +216,7 @@ The following table summarizes the custom math symbol additions.
 *** math-delimiters
 
 The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package provides commands for inserting TeX/LaTeX math delimiters. It is configured to take over the =$= key in Org and LaTeX modes, unbinding it from =cdlatex-mode-map= where it would conflict.
+
 #+begin_src emacs-lisp
 (use-package math-delimiters
   :straight (:host github :repo "oantolin/math-delimiters")
@@ -720,7 +721,7 @@ is applied before the source is loaded.
   :commands elfeed)
 #+end_src
 
-The installed Elfeed version refreshes entry buffers through =elfeed-show-refresh= rather than an update hook. Preview only the redrawn line when an individual search entry changes.
+The installed Elfeed version refreshes entry buffers through =elfeed-show-refresh= rather than an update hook. Redraws are coalesced and Elfeed preview jobs run one at a time, avoiding a flood of overlapping LaTeX processes during feed updates.
 
 #+name: elfeed-latex-previews
 #+begin_src emacs-lisp
@@ -744,24 +745,70 @@ The installed Elfeed version refreshes entry buffers through =elfeed-show-refres
           (when entries
             (org-latex-preview-place org-latex-preview-process-default entries)))))))
 
-(defun my/elfeed-latex-preview-entry (entry)
-  "Preview the search line redrawn for ENTRY."
-  (when-let* ((index (cl-position entry elfeed-search-entries)))
-    (save-excursion
-      (goto-char (point-min))
-      (forward-line (+ elfeed-search--offset index -1))
-      (my/elfeed-latex-preview (line-beginning-position) (line-end-position)))))
+(defvar my/elfeed-latex-preview-pending nil
+  "Buffers awaiting an Elfeed LaTeX preview.")
 
-(defun my/elfeed-latex-preview-show (&rest _)
-  "Preview the refreshed Elfeed entry buffer."
-  (my/elfeed-latex-preview))
+(defvar my/elfeed-latex-preview-active nil
+  "Buffer whose Elfeed LaTeX preview job is running.")
+
+(defvar my/elfeed-latex-preview-timer nil
+  "Idle timer for pending Elfeed LaTeX previews.")
+
+(defun my/elfeed-latex-preview-schedule ()
+  "Schedule pending Elfeed previews when no job is running."
+  (when (and my/elfeed-latex-preview-pending
+             (not my/elfeed-latex-preview-active)
+             (not my/elfeed-latex-preview-timer))
+    (setq my/elfeed-latex-preview-timer
+          (run-with-idle-timer 0.5 nil #'my/elfeed-latex-preview-run))))
+
+(defun my/elfeed-latex-preview-queue (&rest _)
+  "Queue the current Elfeed buffer for a LaTeX preview."
+  (unless (memq (current-buffer) my/elfeed-latex-preview-pending)
+    (setq my/elfeed-latex-preview-pending
+          (nconc my/elfeed-latex-preview-pending (list (current-buffer)))))
+  (my/elfeed-latex-preview-schedule))
+
+(defun my/elfeed-latex-preview-entry (entry)
+  "Queue a preview when ENTRY is visible in the search buffer."
+  (when (cl-position entry elfeed-search-entries)
+    (my/elfeed-latex-preview-queue)))
+
+(defun my/elfeed-latex-preview-run ()
+  "Start one pending Elfeed LaTeX preview job."
+  (setq my/elfeed-latex-preview-timer nil)
+  (unless my/elfeed-latex-preview-active
+    (let ((buffer (pop my/elfeed-latex-preview-pending)))
+      (when (buffer-live-p buffer)
+        (setq my/elfeed-latex-preview-active buffer)
+        (let (started)
+          (unwind-protect
+              (with-current-buffer buffer
+                (setq started (my/elfeed-latex-preview)))
+            (unless started
+              (setq my/elfeed-latex-preview-active nil)
+              (my/elfeed-latex-preview-schedule))))))
+    (my/elfeed-latex-preview-schedule)))
+
+(defun my/elfeed-latex-preview-finished (_exit-code _process-buffer info)
+  "Release the Elfeed preview job described by INFO."
+  (when (and my/elfeed-latex-preview-active
+             (eq my/elfeed-latex-preview-active (plist-get info :org-buffer)))
+    (setq my/elfeed-latex-preview-active nil)
+    (my/elfeed-latex-preview-schedule)))
+
+(add-hook 'org-latex-preview-process-finish-functions
+          #'my/elfeed-latex-preview-finished)
 
 (with-eval-after-load 'elfeed-search
-  (add-hook 'elfeed-search-update-hook #'my/elfeed-latex-preview)
+  (remove-hook 'elfeed-search-update-hook #'my/elfeed-latex-preview)
+  (advice-remove 'elfeed-search-update-entry #'my/elfeed-latex-preview-entry)
+  (add-hook 'elfeed-search-update-hook #'my/elfeed-latex-preview-queue)
   (advice-add 'elfeed-search-update-entry :after #'my/elfeed-latex-preview-entry))
 
 (with-eval-after-load 'elfeed-show
-  (advice-add 'elfeed-show-refresh :after #'my/elfeed-latex-preview-show))
+  (advice-remove 'elfeed-show-refresh #'my/elfeed-latex-preview-show)
+  (advice-add 'elfeed-show-refresh :after #'my/elfeed-latex-preview-queue))
 #+end_src
 
 *** citar
