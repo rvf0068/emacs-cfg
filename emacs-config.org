@@ -250,6 +250,8 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
 - This system works with a custom set of Yasnippet snippets (bound to =<f6> <key>=) that insert theorem-like environments (see =yasnippet= section).
 - The snippets use the helper function =my/org-snippet-get-unique-label= from =cross-refs.el= to prompt for a label and ensure it is not a duplicate before insertion.
 
+The =C-c a d= dashboard combines a seven-day agenda with open TODOs across configured agenda files. Use =C-c c i= to capture tasks and =C-c c w= to capture web pages; during a daily review, turn inbox items into actionable tasks and schedule only work that has a real date.
+
 #+begin_src emacs-lisp
 (use-package org
   :demand t
@@ -291,6 +293,17 @@ This configuration loads a custom helper file, =cross-refs.el=, which defines fu
                    (file+headline ,(expand-file-name "Inbox.org" my-notes-directory) "Web")
                    "* %a\n\n%U\n%i%?")))
   (rvf/set-gtd)
+  ;; A compact review view: scheduled work for the next week and open TODOs
+  ;; across the configured agenda files.
+  (setq org-agenda-custom-commands
+        '(("d" "Dashboard"
+           ((agenda "" ((org-agenda-span 7)))
+            (todo "TODO"
+                 ((org-agenda-overriding-header "Open TODO tasks"))))))
+        org-agenda-start-on-weekday nil
+        org-deadline-warning-days 7
+        org-agenda-skip-deadline-if-done t
+        org-agenda-skip-scheduled-if-done t)
   ;; Font scaling for better readability
   (set-face-attribute 'org-level-1 nil :height 1.5)
   (set-face-attribute 'org-level-2 nil :height 1.3)
