@@ -38,7 +38,7 @@
  ("modus-themes" . "f71db69bad2d4bac680960273b663c73c305a413")
  ("nongnu-elpa" . "9589680ec7cf0ac153aa0a0c7f9feae602826ad6")
  ("orderless" . "3a2a32181f7a5bd7b633e40d89de771a5dd88cc7")
- ("org" . "367df3154dec60697af02cf2f47c66e37f87c131")
+ ("org" . "e9b603015e72cf188b895f3f5d408dff867710b9")
  ("org-fragtog" . "562f6590843eeab30ac8aa2ced285aff8d590861")
  ("org-noter" . "ab9628e449d76af8b2e5a9d5fead4e03ca76a03d")
  ("org-pomodoro" . "3f5bcfb80d61556d35fc29e5ddb09750df962cc6")
