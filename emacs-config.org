@@ -697,7 +697,7 @@ is applied before the source is loaded.
 
 *** smartparens
 
-[[https://github.com/Fuco1/smartparens][Smartparens]] is a minor mode for managing paired delimiters. It is configured to ignore =$= (handled by =math-delimiters=) and to correctly handle Org mode's verbatim (=) and math (|) delimiters.
+[[https://github.com/Fuco1/smartparens][Smartparens]] is a minor mode for managing paired delimiters. It is configured to ignore =$= (handled by =math-delimiters=), handle Org mode's verbatim (=) delimiters, and pair =|= in Org and LaTeX math.
 
 #+begin_src emacs-lisp
 (use-package smartparens
@@ -715,8 +715,8 @@ is applied before the source is loaded.
 		 :unless '(sp-point-after-word-p sp-in-math-p)
 		 :post-handlers '(("[d1]" "SPC")))
 
-  ;; For org-mode math, e.g., |x|
-  (sp-local-pair 'org-mode "|" "|"
+  ;; For Org and LaTeX math, e.g., |x|
+  (sp-local-pair '(org-mode LaTeX-mode) "|" "|"
 		 :when '(sp-in-math-p)))
 #+end_src
 
