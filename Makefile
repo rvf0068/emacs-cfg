@@ -1,3 +1,4 @@
+.DEFAULT_GOAL := test
 # Optional machine-specific settings; command-line overrides still win.
 EMACS ?= emacs
 UV_PROJECT ?=
