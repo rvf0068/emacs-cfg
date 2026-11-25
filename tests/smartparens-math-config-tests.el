@@ -47,7 +47,8 @@
       (ert-info ((format "Math pair case: %S" case))
         (should (bound-and-true-p smartparens-mode))
         (should (memq (key-binding (kbd "|"))
-                      '(self-insert-command org-self-insert-command)))
+                      '(self-insert-command org-self-insert-command
+                        org-force-self-insert)))
         (should (equal (sp-get-pair "|" :close) "|"))
         (save-window-excursion
           (switch-to-buffer (current-buffer))
