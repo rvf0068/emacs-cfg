@@ -11,3 +11,28 @@ A primary goal here is to create a first-class environment for academic writing 
 Beyond LaTeX, the setup also includes *YASnippet* for powerful, time-saving code and text templates ⚡ (you can see custom ones in the =snippets/= directory). It also loads custom helper functions from the =lisp/= directory to add unique behaviors and streamline common tasks.
 
 To use this, simply clone the repository into your =~/.emacs.d= directory. The next time you start Emacs, it will automatically bootstrap, install the required packages, and tangle the =emacs-config.org= file. Enjoy! 😊
+
+* Regression tests
+
+The test suite uses a temporary home directory, copies the public configuration
+and installs packages using the recorded straight versions. It does not read
+personal.org or custom.el from your real Emacs directory.
+
+#+begin_src sh
+make test
+#+end_src
+
+Use =make test-unit= for the original ERT suite, =make test-workflows= for
+both real workflows, or =make test-latex= and =make test-jupyter= separately.
+Set =EMACS=/path/to/emacs= on the make command line to test another executable.
+The graphical tests require graphical Emacs with SVG and dynamic module support,
+xvfb-run, xauth, GNU timeout, TeX Live (including lxfonts, AMS packages and
+mylatexformat), dvisvgm, and Python with Jupyter, IPykernel, NumPy, NetworkX
+and Matplotlib on PATH. PDF Tools and ZeroMQ need their native dependencies.
+Set =RVF_EPDFINFO= to the path of a working epdfinfo if it is not on PATH.
+The suite downloads and builds packages in a temporary directory.
+
+GitHub Actions runs the suite on pushes and pull requests using Ubuntu 24.04.
+Use [[file:samples/workflow-test.org][the interactive test document]] for manual preview editing and
+PDF export checks on your usual Emacs version. Automated tests do not yet cover
+editing and regenerating previews, completion or PDF export.

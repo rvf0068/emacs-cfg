@@ -1,0 +1,49 @@
+#+title: Daily mathematical workflow regression
+#+latex_header: \usepackage{amsmath,amssymb}
+#+PROPERTY: header-args:jupyter-python :session workflow-test :results replace
+
+* LaTeX previews
+
+Inline: \(\mathbb{Q}\), \(\varnothing\), \(\Delta(G)\).
+
+\[
+\widetilde H_i(\Delta(G);\mathbb{Q})
+\]
+
+\begin{equation}
+|V(O_3)|=6
+\end{equation}
+
+Use C-c C-x C-l to generate previews; move into and out of a fragment,
+edit it, and verify that its preview reappears with the changed formula.
+
+* Jupyter
+
+Run each block with C-c C-c in order in an environment with NetworkX,
+NumPy, Matplotlib and a Python kernel. Select your normal kernel/session
+if necessary.
+
+#+begin_src jupyter-python
+import networkx as nx
+import numpy as np
+G = nx.octahedral_graph()
+G.number_of_nodes()
+#+end_src
+
+Expected result: 6.
+
+#+begin_src jupyter-python
+int(np.sum([G.number_of_nodes(), G.number_of_edges()]))
+#+end_src
+
+Expected result: 18 (the session must retain G).
+
+#+begin_src jupyter-python :exports results
+%matplotlib inline
+import matplotlib.pyplot as plt
+nx.draw(G, with_labels=True)
+plt.show()
+#+end_src
+
+Expected result: a visible octahedral graph. Export to PDF with C-c C-e
+l p and verify the graph appears without its generating source block.
