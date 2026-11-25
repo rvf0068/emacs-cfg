@@ -57,6 +57,7 @@ Core settings for Emacs behavior, keybindings, and hooks for fundamental modes.
 
 #+begin_src emacs-lisp
 (use-package emacs
+  :straight nil
   :bind
   ("C-x k" . kill-current-buffer)
   ([(f2) (f2)] . indent-according-to-mode)
@@ -260,6 +261,8 @@ The =C-c a d= dashboard combines a seven-day agenda with open TODOs across confi
 
 #+begin_src emacs-lisp
 (use-package org
+  ;; Already registered by init.el before Org tangles this file.
+  :straight nil
   :demand t
   :bind
   ("C-c a" . org-agenda)

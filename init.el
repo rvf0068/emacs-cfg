@@ -4,6 +4,10 @@
 ;; known to be defined" warnings (cross-file references); keep them quiet.
 (setq native-comp-async-report-warnings-errors 'silent)
 
+;; Require explicit :straight declarations for external packages.
+;; Set this before bootstrap, and let private settings override it if needed.
+(setq straight-use-package-by-default nil)
+
 ;; Bootstrap straight.el package manager
 (defvar bootstrap-version)
 (let ((bootstrap-file
@@ -18,12 +22,16 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-;; I think this gets the latest org
+;; Register Org before loading any Org libraries or tangling the configuration.
+;; Its revision is recorded in straight/versions/default.el.
 (straight-use-package 'org)
 
 ;; Ensure straight manages transient so Magit gets the required version,
 ;; overriding the potentially outdated built-in.
 (straight-use-package 'transient)
+
+;; Emacs 29+ includes use-package; straight supplies its :straight keyword.
+(require 'use-package)
 
 ;; Add our personal lisp directory to the load-path
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))

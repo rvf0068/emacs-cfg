@@ -6,6 +6,19 @@
 (require 'ob-core)
 (require 'org-element)
 
+(ert-deftest rvf/workflow-bootstrap-straight ()
+  ;; Inspect the configuration actually loaded by the graphical runner.
+  (should-not package-enable-at-startup)
+  (should-not straight-use-package-by-default)
+  (should (featurep 'use-package))
+  (should (memq :straight use-package-keywords))
+  (should (featurep 'org))
+  (let ((straight-dir (expand-file-name "straight/" user-emacs-directory)))
+    (dolist (library (list (symbol-file 'org-mode 'defun)
+                           (locate-library "transient")))
+      (should library)
+      (should (file-in-directory-p library straight-dir)))))
+
 (defun rvf/test-wait-for (predicate seconds)
   "Wait up to SECONDS for PREDICATE, servicing real process output."
   (let ((deadline (+ (float-time) seconds)))

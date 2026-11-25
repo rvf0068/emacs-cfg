@@ -12,6 +12,26 @@ Beyond LaTeX, the setup also includes *YASnippet* for powerful, time-saving code
 
 To use this, simply clone the repository into your =~/.emacs.d= directory. The next time you start Emacs, it will automatically bootstrap, install the required packages, and tangle the =emacs-config.org= file. Enjoy! 😊
 
+* Package management
+
+=early-init.el= disables automatic package.el activation before startup.
+=init.el= bootstraps straight.el, registers Org and Transient before other
+packages can load their built-in versions, and loads =use-package= explicitly.
+External packages in =emacs-config.org= declare =:straight t= or their custom
+recipe; built-in or already registered packages need no second installation.
+Private settings in =personal.org= can still declare their own packages.
+
+The lockfile =straight/versions/default.el= records the intended revisions.
+For an existing installation, use =M-x straight-thaw-versions= when you
+deliberately want to restore the recorded revisions, after checking for local
+changes in package repositories. Use =M-x straight-freeze-versions= after an
+intentional package upgrade to record the new revisions; review the lockfile
+diff before committing. Normal configuration refactoring should not upgrade
+packages. =org-fragtog= is no longer needed with Org's native LaTeX preview
+mode; its lock entry has been removed. If you still have a private declaration
+for it, remove that declaration before freezing again. This does not delete
+any existing local package clone.
+
 * Regression tests
 
 The test suite uses a temporary home directory, copies the public configuration
