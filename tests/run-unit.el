@@ -3,7 +3,9 @@
       package-enable-at-startup nil)
 (load (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory)
       nil 'nomessage)
-(dolist (package '(org org-roam elfeed embark citar))
+;; Match the runtime bootstrap order, without loading the user's configuration.
+;; Citar Embark has a separate straight recipe and is not built by citar.
+(dolist (package '(org transient org-roam elfeed embark citar citar-embark))
   (straight-use-package package))
 (require 'use-package)
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
