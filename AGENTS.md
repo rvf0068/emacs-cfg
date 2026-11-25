@@ -1,7 +1,7 @@
 # Configuration maintenance
 
 - Keep straight.el, explicit external package recipes, and the literate emacs-config.org configuration. Do not introduce another package manager.
-- Keep current package revisions during refactoring. Retain elfeed-org, org-pomodoro, minions and modus-themes; org-fragtog is superseded and may be removed in a separate verified change.
+- Keep current package revisions during refactoring; make only explicitly justified compatibility pin corrections (such as the Org revision required for native previews). Retain elfeed-org, org-pomodoro, minions and modus-themes; org-fragtog is superseded and may be removed in a separate verified change.
 - Preserve working functionality and existing keybindings, particularly Org, LaTeX previews, AUCTeX, Jupyter, Citar, Org Roam, and uv integration.
 - Keep substantial implementations and compatibility fixes in lisp/ with lexical binding and focused ERT tests. Prefer extending existing implementations; document upstream issues.
 - Use \( ... \) for inline math and \[ ... \] for display math in Org documents. Preserve existing label conventions.

@@ -69,7 +69,6 @@
 
 (ert-deftest rvf/workflow-jupyter-real-kernel ()
   (should (executable-find "jupyter"))
-  (should (fboundp 'org-babel-execute:jupyter-python))
   (let* ((dir (make-temp-file "rvf-jupyter-" t))
          (file (expand-file-name "workflow.org" dir)))
     (unwind-protect
@@ -85,6 +84,9 @@
                   "nx.draw(G, with_labels=True)\nplt.show()\n#+end_src\n")
           (save-buffer)
           (org-mode)
+          ;; ob-jupyter creates language aliases in org-mode-hook, not at load time.
+          (should (featurep 'ob-jupyter))
+          (should (fboundp 'org-babel-execute:jupyter-python))
           (rvf/test-execute-named "graph")
           (should (rvf/test-result-matches "graph" "^: +6[ \t]*$"))
           (rvf/test-execute-named "reuse")

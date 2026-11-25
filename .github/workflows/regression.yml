@@ -14,8 +14,10 @@ jobs:
       - name: Install graphical Emacs and native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y emacs-gtk xvfb xauth libzmq3-dev build-essential pkg-config libpoppler-glib-dev libpng-dev zlib1g-dev elpa-pdf-tools-server texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-science dvisvgm latexmk biber aspell-en ripgrep
+          sudo apt-get install -y emacs-gtk xvfb xauth libzmq3-dev build-essential pkg-config libpoppler-glib-dev libpng-dev zlib1g-dev elpa-pdf-tools-server texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science dvisvgm latexmk biber aspell-en ripgrep
           emacs --version
+          kpsewhich lxfonts.sty
+          kpsewhich mylatexformat.ltx
           epdfinfo=$(find /usr -type f -name epdfinfo -print -quit)
           test -n "$epdfinfo"
           echo "RVF_EPDFINFO=$epdfinfo" >> "$GITHUB_ENV"

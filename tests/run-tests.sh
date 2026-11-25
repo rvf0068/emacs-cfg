@@ -18,7 +18,7 @@ export JUPYTER_CONFIG_DIR="$HOME/.jupyter" JUPYTER_DATA_DIR="$HOME/.local/share/
 export RVF_TEST_LOG="$tmp/emacs.log" RVF_TEST_MODE="$mode"
 export RVF_TEST_DIR="$HOME/.emacs.d"
 export MPLBACKEND=Agg
-mkdir -p "$RVF_TEST_DIR/straight/versions" "$HOME/notes" "$HOME/library" "$HOME/Documents/org-latex-previews"
+mkdir -p "$RVF_TEST_DIR/straight/versions" "$RVF_TEST_DIR/straight/repos" "$HOME/notes" "$HOME/library" "$HOME/Documents/org-latex-previews"
 touch "$HOME/library/test.bib"
 cp "$root/init.el" "$root/emacs-config.org" "$RVF_TEST_DIR/"
 if [[ -f "$root/early-init.el" ]]; then cp "$root/early-init.el" "$RVF_TEST_DIR/"; fi
@@ -43,9 +43,11 @@ if [[ "$mode" != unit ]]; then
     python -m ipykernel install --user --name rvf-regression --display-name "Emacs regression"
 fi
 cd "$RVF_TEST_DIR"
+status=0
 if [[ "$mode" != unit ]]; then
-    timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash --load tests/run-workflows.el
+    timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash --load tests/run-workflows.el || status=1
 fi
 if [[ "$mode" == all || "$mode" == unit ]]; then
-    timeout --kill-after=20s 20m "$emacs" -Q --batch --load tests/run-unit.el
+    timeout --kill-after=20s 20m "$emacs" -Q --batch --load tests/run-unit.el || status=1
 fi
+exit "$status"
