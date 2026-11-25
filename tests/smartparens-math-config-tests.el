@@ -19,7 +19,15 @@
     (eval (append (seq-take form 2) (nthcdr 4 form)))))
 
 (ert-deftest rvf/smartparens-pairs-bars-in-latex-math ()
+  ;; Reproduce the stale keymap of an early CDLaTeX load independently
+  ;; of ERT's test ordering.
+  (require 'cdlatex)
+  (dolist (key '("(" "{" "[" "|" "<"))
+    (define-key cdlatex-mode-map (kbd key) #'cdlatex-pbb))
   (rvf/smartparens-math-test-load-package-config 'cdlatex)
+  (should-not cdlatex-takeover-parenthesis)
+  (dolist (key '("(" "{" "[" "|" "<"))
+    (should-not (lookup-key cdlatex-mode-map (kbd key))))
   (rvf/smartparens-math-test-load-package-config 'smartparens)
   (require 'latex)
   (require 'org)
@@ -36,10 +44,21 @@
         (org-cdlatex-mode 1))
       (insert (nth 1 case))
       (goto-char (nth 2 case))
-      (save-window-excursion
-        (switch-to-buffer (current-buffer))
-        (execute-kbd-macro "|"))
-      (should (equal (buffer-string) (nth 3 case)))
-      (should (= (point) (nth 4 case))))))
+      (ert-info ((format "Math pair case: %S" case))
+        (should (bound-and-true-p smartparens-mode))
+        (should (memq (key-binding (kbd "|"))
+                      '(self-insert-command org-self-insert-command
+                        org-force-self-insert)))
+        (should (equal (sp-get-pair "|" :close) "|"))
+        (save-window-excursion
+          (switch-to-buffer (current-buffer))
+          (execute-kbd-macro "|"))
+        ;; Check after insertion: an empty Org fragment may not be
+        ;; recognized as math until it has content.
+        (if (string-prefix-p "text" (nth 1 case))
+            (should-not (sp-in-math-p "|" 'insert 'code))
+          (should (sp-in-math-p "|" 'insert 'code)))
+        (should (equal (buffer-string) (nth 3 case)))
+        (should (= (point) (nth 4 case)))))))
 
 ;;; smartparens-math-config-tests.el ends here
