@@ -210,7 +210,14 @@ The following table summarizes the custom math symbol additions.
      ("gen"  "Insert \\langle \\rangle" "\\langle ?\\rangle" cdlatex-position-cursor nil nil t)
      ("set"  "Insert a set" "\\{?\\mid \\}" cdlatex-position-cursor nil nil t)))
   (cdlatex-simplify-sub-super-scripts nil)
-  (cdlatex-takeover-parenthesis nil))
+  (cdlatex-takeover-parenthesis nil)
+  :config
+  ;; CDLaTeX constructs its keymap at load time.  If it was loaded
+  ;; earlier, changing the custom option alone leaves stale bindings.
+  (unless cdlatex-takeover-parenthesis
+    (dolist (key '("(" "{" "[" "|" "<"))
+      (when (eq (lookup-key cdlatex-mode-map (kbd key)) #'cdlatex-pbb)
+        (define-key cdlatex-mode-map (kbd key) nil)))))
 #+end_src
 
 *** math-delimiters
