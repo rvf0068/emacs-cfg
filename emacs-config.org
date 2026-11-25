@@ -253,7 +253,7 @@ This custom minor mode allows for quick insertion of standard math sets ($\mathb
 This section contains the configuration for [[https://orgmode.org][Org mode]], a powerful system for outlining, note-taking, project planning, and authoring.
 
 This configuration loads a custom helper file, =cross-refs.el=, which defines functions to enable a smart cross-referencing system. When the preceding word does not identify a type, =C-c r= offers all document labels. The completion list uses bounded previews and merges duplicate =#+name:= and =#+label:= declarations. Historical =pf:= and =prop:= labels remain discoverable alongside =prf:= and =pro:=, without changing any existing snippets.
-- =my/org-insert-smart-ref= (bound to =C-c r r=) intelligently guesses the type of reference to insert (e.g., `thm:`, `def:`) based on the preceding word.
+- =my/org-insert-smart-ref= (bound to =C-c r=) intelligently guesses the type of reference to insert (e.g., `thm:`, `def:`) based on the preceding word.
 - This system works with a custom set of Yasnippet snippets (bound to =<f6> <key>=) that insert theorem-like environments (see =yasnippet= section).
 - The snippets use the helper function =my/org-snippet-get-unique-label= from =cross-refs.el= to prompt for a label and ensure it is not a duplicate before insertion.
 

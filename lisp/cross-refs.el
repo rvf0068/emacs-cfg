@@ -74,7 +74,7 @@ Never search outside ELEMENT or use an opening or closing block marker."
        (t (setq end nil)))
       (let ((case-fold-search t))
         (if (and end (< (point) end)
-                 (re-search-forward "^[ \t]*\\S-" end t))
+                 (re-search-forward "^[ \t]*[^ \t\r\n]" end t))
             (let ((line (string-trim
                          (buffer-substring-no-properties
                           (line-beginning-position)
