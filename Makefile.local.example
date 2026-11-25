@@ -1,0 +1,4 @@
+# Copy to Makefile.local and adjust for this machine.
+# EMACS = /opt/emacs-32-noble/bin/emacs
+# UV_PROJECT = $(HOME)/Python/pycliques-project
+# export RVF_EPDFINFO = /usr/bin/epdfinfo

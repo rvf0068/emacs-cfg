@@ -1,12 +1,21 @@
+# Optional machine-specific settings; command-line overrides still win.
 EMACS ?= emacs
-.PHONY: test test-unit test-latex test-jupyter test-workflows
+UV_PROJECT ?=
+-include Makefile.local
+RUN_TESTS = $(if $(strip $(UV_PROJECT)),uv run --project "$(UV_PROJECT)" --,) bash tests/run-tests.sh
+
+.PHONY: doctor doctor-unit test test-unit test-latex test-jupyter test-workflows
+doctor:
+	$(RUN_TESTS) all "$(EMACS)" --doctor
+doctor-unit:
+	$(RUN_TESTS) unit "$(EMACS)" --doctor
 test:
-	bash tests/run-tests.sh all "$(EMACS)"
+	$(RUN_TESTS) all "$(EMACS)"
 test-unit:
-	bash tests/run-tests.sh unit "$(EMACS)"
+	$(RUN_TESTS) unit "$(EMACS)"
 test-latex:
-	bash tests/run-tests.sh latex "$(EMACS)"
+	$(RUN_TESTS) latex "$(EMACS)"
 test-jupyter:
-	bash tests/run-tests.sh jupyter "$(EMACS)"
+	$(RUN_TESTS) jupyter "$(EMACS)"
 test-workflows:
-	bash tests/run-tests.sh workflows "$(EMACS)"
+	$(RUN_TESTS) workflows "$(EMACS)"
