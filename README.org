@@ -25,12 +25,44 @@ make test
 Use =make test-unit= for the original ERT suite, =make test-workflows= for
 both real workflows, or =make test-latex= and =make test-jupyter= separately.
 Set =EMACS=/path/to/emacs= on the make command line to test another executable.
+Run =make doctor= to check executables, TeX files and Python dependencies before
+downloading packages. =make doctor-unit= checks only unit-suite prerequisites.
+All graphical targets initialize the full public configuration and currently
+require the same Python and TeX dependencies.
 The graphical tests require graphical Emacs with SVG and dynamic module support,
 xvfb-run, xauth, GNU timeout, TeX Live (including lxfonts, AMS packages and
 mylatexformat), dvisvgm, and Python with Jupyter, IPykernel, NumPy, NetworkX
 and Matplotlib on PATH. PDF Tools and ZeroMQ need their native dependencies.
 Set =RVF_EPDFINFO= to the path of a working epdfinfo if it is not on PATH.
-The suite downloads and builds packages in a temporary directory.
+The suite downloads and builds packages in a temporary directory. The unit
+runner registers its selected dependencies using the literal straight recipes
+in =emacs-config.org=, without evaluating the configuration or eagerly loading
+the packages.
+
+** Local settings with uv
+
+For an Emacs executable outside PATH and a Python environment managed by uv,
+copy =Makefile.local.example= to =Makefile.local= (ignored by Git) and set:
+
+#+begin_src makefile
+EMACS = /opt/emacs-32-noble/bin/emacs
+UV_PROJECT = $(HOME)/Python/pycliques-project
+#+end_src
+
+Then run =make doctor= and =make test= from this repository. The Makefile uses
+=uv run --project= when =UV_PROJECT= is set; normal uv environment synchronization
+rules apply. Make sure the selected project's environment includes the Python
+dependencies listed above. No real Emacs personal settings or package caches are
+used by the tests. Without local settings, the original PATH-based commands work
+as before. Command-line assignments override the local file.
+
+The equivalent one-off command, without creating a local file, is:
+
+#+begin_src sh
+cd ~/Python/pycliques-project
+uv run make -C ~/emacsen/math-emacs test \
+    EMACS=/opt/emacs-32-noble/bin/emacs
+#+end_src
 
 GitHub Actions runs the suite on pushes and pull requests using Ubuntu 24.04.
 Use [[file:samples/workflow-test.org][the interactive test document]] for manual preview editing and

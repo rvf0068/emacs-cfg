@@ -1,6 +1,7 @@
 ;;; workflow-tests.el --- Real Org LaTeX and Jupyter tests -*- lexical-binding: t; -*-
 (require 'ert)
 (require 'cl-lib)
+(require 'subr-x)
 (require 'org)
 (require 'ob-core)
 (require 'org-element)
@@ -48,7 +49,7 @@
                    (lambda () (= 3 (length (rvf/test-preview-images)))) 120))
           (dolist (spec (rvf/test-preview-images))
             (should (eq (plist-get (cdr spec) :type) 'svg))))
-      (when-let ((buffer (get-file-buffer file))) (kill-buffer buffer))
+      (when-let* ((buffer (get-file-buffer file))) (kill-buffer buffer))
       (delete-file file))))
 
 (defun rvf/test-execute-named (name)
@@ -106,7 +107,7 @@
           (should (cl-some (lambda (ov)
                             (rvf/test-image-file-p (overlay-get ov 'display)))
                           (overlays-in (point-min) (point-max)))))
-      (when-let ((buffer (get-file-buffer file)))
+      (when-let* ((buffer (get-file-buffer file)))
         (with-current-buffer buffer (set-buffer-modified-p nil))
         (kill-buffer buffer))
       (delete-directory dir t))))
