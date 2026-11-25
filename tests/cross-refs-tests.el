@@ -113,4 +113,34 @@
         (should (string-match-p (regexp-quote fragment) latex)))
       (should-not (string-match-p (regexp-quote "\\ref{eq:b}") latex)))))
 
+
+(ert-deftest rvf/cross-refs-name-versus-label-navigation-and-export ()
+  ;; Compare the three declaration forms using Org itself, not our collector.
+  (dolist (case '(("name" "#+name: thm:target\n" t)
+                  ("label" "#+label: thm:target\n" nil)
+                  ("both" "#+name: thm:target\n#+label: thm:target\n" t)))
+    (ert-info ((format "Declaration form: %s" (car case)))
+      (rvf/test-cross-refs-buffer
+          (concat (nth 1 case)
+                  "#+begin_theorem\nA theorem.\n#+end_theorem\n\n"
+                  "See [[thm:target]].\n")
+        (let ((org-link-search-must-match-exact-headline t)
+              (org-export-use-babel nil)
+              (org-latex-prefer-user-labels t))
+          ;; Test the actual command used for opening internal links.
+          ;; Strict matching excludes incidental fuzzy text matches.
+          (goto-char (point-max))
+          (search-backward "[[thm:target]]")
+          (forward-char 3)
+          (if (nth 2 case)
+              (progn
+                (org-open-at-point)
+                (should (looking-at-p "[ \t]*#\\+name: thm:target")))
+            (should-error (org-open-at-point)))
+          (let ((latex (org-export-as 'latex nil nil t)))
+            (should (string-match-p
+                     (regexp-quote "\\label{thm:target}") latex))
+            (should (string-match-p
+                     (regexp-quote "\\ref{thm:target}") latex))))))))
+
 ;;; cross-refs-tests.el ends here
