@@ -26,5 +26,14 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/workflow-venv"
           "$RUNNER_TEMP/workflow-venv/bin/python" -m pip install jupyter ipykernel matplotlib numpy networkx
           echo "$RUNNER_TEMP/workflow-venv/bin" >> "$GITHUB_PATH"
+      - name: Validate dependency diagnostics
+        run: |
+          make doctor
+          if make doctor-unit EMACS=/nonexistent/emacs > "$RUNNER_TEMP/doctor-error.log" 2>&1; then
+            echo "Missing executable was not detected" >&2
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/doctor-error.log"
+          grep -F "ERROR: Required executable not found: /nonexistent/emacs" "$RUNNER_TEMP/doctor-error.log"
       - name: Run real Org workflows and ERT regression tests
         run: make test

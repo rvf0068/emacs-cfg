@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ $# -lt 2 || $# -gt 3 || ("${3:-}" != "" && "${3:-}" != --doctor) ]]; then
+    echo 'Usage: run-tests.sh {all|unit|latex|jupyter|workflows} EMACS [--doctor]' >&2
+    exit 2
+fi
 mode="$1"
-emacs="$(command -v "$2")"
-case "$mode" in all|unit|latex|jupyter|workflows) ;; *) exit 2;; esac
+case "$mode" in all|unit|latex|jupyter|workflows) ;; *) echo "Unknown test mode: $mode" >&2; exit 2;; esac
 root="$(cd "$(dirname "$0")/.." && pwd)"
+source "$root/tests/check-dependencies.sh"
+rvf_check_dependencies "$mode" "$2"
+if [[ "${3:-}" == --doctor ]]; then exit 0; fi
+emacs="$(command -v -- "$2")"
+if [[ "$emacs" != /* ]]; then emacs="$(realpath "$emacs")"; fi
 tmp="$(mktemp -d)"
 cleanup() {
     status=$?
@@ -29,13 +37,17 @@ cat > "$RVF_TEST_DIR/personal.org" <<'EOF'
 (setq my-notes-directory (expand-file-name "notes/" "~")
       my-library-path (expand-file-name "library/" "~")
       my-bibliography (expand-file-name "library/test.bib" "~"))
-(when-let ((program (getenv "RVF_EPDFINFO")))
+(require 'subr-x)
+(when-let* ((program (getenv "RVF_EPDFINFO")))
   (setq pdf-info-epdfinfo-program program))
 #+end_src
 EOF
 # Bootstrap the exact recorded straight revision.
 pin="$(sed -n 's/.*("straight\.el" \. "\([0-9a-f]*\)").*/\1/p' "$RVF_TEST_DIR/straight/versions/default.el")"
-test -n "$pin"
+if [[ -z "$pin" ]]; then
+    echo "ERROR: straight.el pin not found in straight/versions/default.el" >&2
+    exit 1
+fi
 git clone --quiet https://github.com/radian-software/straight.el.git "$RVF_TEST_DIR/straight/repos/straight.el"
 git -C "$RVF_TEST_DIR/straight/repos/straight.el" checkout --quiet "$pin"
 if [[ "$mode" != unit ]]; then
@@ -45,9 +57,11 @@ fi
 cd "$RVF_TEST_DIR"
 status=0
 if [[ "$mode" != unit ]]; then
+    echo "Running graphical Org workflow tests..."
     timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash --load tests/run-workflows.el || status=1
 fi
 if [[ "$mode" == all || "$mode" == unit ]]; then
+    echo "Running isolated ERT unit tests..."
     timeout --kill-after=20s 20m "$emacs" -Q --batch --load tests/run-unit.el || status=1
 fi
 exit "$status"
