@@ -98,4 +98,21 @@
              (lambda (&rest _) (ert-fail "Unexpected remote file probe"))))
     (should-not (rvf/uv-find-environment "/ssh:unreachable:/project/"))))
 
+(ert-deftest rvf/uv-babel-environment-crosses-temporary-buffer ()
+  ;; Model only the buffer switch. The graphical workflow exercises the
+  ;; actual Org execution and an actual Python subprocess.
+  (with-temp-buffer
+    (setq-local rvf/uv-environment "/fixture/.venv"
+                process-environment (copy-sequence process-environment)
+                exec-path (cons "/fixture/.venv/bin" exec-path))
+    (setenv "VIRTUAL_ENV" rvf/uv-environment)
+    (rvf/uv--babel-python-environment
+     (lambda ()
+       (with-temp-buffer
+         (rvf/uv--babel-subprocess-environment
+          (lambda ()
+            (should (equal (getenv "VIRTUAL_ENV") "/fixture/.venv"))
+            (should (equal (car exec-path) "/fixture/.venv/bin")))))))
+    (should-not rvf/uv--babel-subprocess-settings)))
+
 ;;; uv-env-tests.el ends here

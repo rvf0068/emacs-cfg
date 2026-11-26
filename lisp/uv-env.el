@@ -86,6 +86,33 @@ Do not install packages, run uv, or change an existing Jupyter session."
                       "No usable project .venv; using original settings")))
     venv))
 
+;; ob-python passes the command to org-babel-eval, which creates a
+;; temporary buffer before running the shell.  Buffer-local executable
+;; and environment settings otherwise disappear at that boundary.
+(defvar rvf/uv--babel-subprocess-settings nil
+  "Dynamically scoped environment for an activated Python Babel evaluation.")
+
+(defun rvf/uv--babel-python-environment (original &rest args)
+  "Carry the current environment through ordinary Python Babel execution."
+  (let ((rvf/uv--babel-subprocess-settings
+         (when rvf/uv-environment
+           (cons process-environment exec-path))))
+    (apply original args)))
+
+(defun rvf/uv--babel-subprocess-environment (original &rest args)
+  "Restore the originating Python buffer's settings at the shell boundary."
+  (if rvf/uv--babel-subprocess-settings
+      (let ((process-environment (car rvf/uv--babel-subprocess-settings))
+            (exec-path (cdr rvf/uv--babel-subprocess-settings)))
+        (apply original args))
+    (apply original args)))
+
+(with-eval-after-load 'ob-python
+  (advice-add 'org-babel-python-evaluate-external-process :around
+              #'rvf/uv--babel-python-environment)
+  (advice-add 'org-babel--shell-command-on-region :around
+              #'rvf/uv--babel-subprocess-environment))
+
 (defun rvf/describe-python-environment ()
   "Display Python executable and environment resolution in this buffer.
 The Jupyter executable is not necessarily the interpreter of a kernel:
