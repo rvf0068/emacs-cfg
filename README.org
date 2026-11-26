@@ -56,6 +56,50 @@ mode; its lock entry has been removed. If you still have a private declaration
 for it, remove that declaration before freezing again. This does not delete
 any existing local package clone.
 
+* Magit repository dashboard
+
+=C-c m= still opens the current repository's status. Use =C-c M=
+(=M-x magit-list-repositories=) to list repositories across selected roots.
+Configure Magit's own option privately, for example:
+
+#+begin_src emacs-lisp
+(setq magit-repository-directories
+      '(("~/Python/" . 1)
+        ("~/.emacs.d/" . 0)))
+#+end_src
+
+Depth 0 lists the directory itself if it is a repository; depth 1
+also discovers repositories directly inside a non-repository root.
+Use deeper searches only when necessary. Discovery stops at a Git
+repository and does not recursively enumerate its nested repositories.
+Adapt the paths to each machine. Missing local directories are skipped
+by Magit; no directories are created. The public configuration does not
+set search roots or change the behavior of the ordinary status command.
+
+To show branches, all three worktree change flags and upstream divergence
+instead of the default version column, optionally set:
+
+#+begin_src emacs-lisp
+(setq magit-repolist-columns
+      '(("Name" 28 magit-repolist-column-ident ())
+        ("Branch" 20 magit-repolist-column-branch ())
+        ("Flags" 5 magit-repolist-column-flags ())
+        ("Behind" 6 magit-repolist-column-unpulled-from-upstream
+         ((:right-align t) (:sort <)))
+        ("Ahead" 6 magit-repolist-column-unpushed-to-upstream
+         ((:right-align t) (:sort <)))
+        ("Path" 60 magit-repolist-column-path ())))
+#+end_src
+
+The flags N, U and S indicate untracked, unstaged and staged changes.
+Ahead/Behind compare with locally recorded upstream references, not
+the current state of GitHub. In the dashboard use RET to open a
+repository, g to refresh the display, m/u to mark/unmark, and f to
+fetch marked repositories. Fetching updates remote-tracking references
+and may require authentication; it does not merge changes into working
+branches. If none is marked, Magit asks before fetching all listed
+repositories. Nothing is fetched automatically.
+
 * GPTel and GPTel-Magit
 
 Configure the GPTel backend and authentication privately in =personal.org=.
