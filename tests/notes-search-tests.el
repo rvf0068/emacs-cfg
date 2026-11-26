@@ -5,6 +5,9 @@
 (require 'notes-search)
 
 (ert-deftest rvf/notes-search-real-ripgrep ()
+  ;; This setting must be special across lexical-binding files; a bare
+  ;; defvar without an initializer is only a local declaration.
+  (should (special-variable-p 'my-notes-directory))
   ;; Avoid opening a minibuffer in batch Emacs.  Exercise the actual
   ;; Consult builder and ripgrep subprocess with the options the command
   ;; supplies, including the null-separated output Consult expects.
@@ -54,6 +57,9 @@
     (should (equal consult-ripgrep-args original))))
 
 (ert-deftest rvf/notes-search-invalid-directory ()
+  ;; Ensure these dynamic bindings really reach the command, so an
+  ;; accidentally unbound variable cannot make all these cases pass.
+  (should (special-variable-p 'my-notes-directory))
   (let ((my-notes-directory nil))
     (should-error (bms/org-roam-rg-search) :type 'user-error))
   (let ((my-notes-directory ""))
