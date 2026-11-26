@@ -22,5 +22,7 @@ Lisp file are ignored by Git. Do not put actual credentials here.
 ;; Optional: disable automatic Eglot startup or allow PATH fallback.
 ;; (setq my-python-eglot-auto-start nil)
 ;; (setq my-python-eglot-allow-global-server t)
+;; Optional: local Git repository dashboard (directory . search depth).
+;; (setq magit-repository-directories '(("~/Python/" . 1)))
 ;; Put your existing private package and GPTel configuration here.
 #+end_src
