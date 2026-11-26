@@ -409,3 +409,29 @@ its processing-info plist."
         (with-current-buffer buffer (set-buffer-modified-p nil))
         (kill-buffer buffer))
       (delete-directory dir t))))
+
+(ert-deftest rvf/workflow-magit-repository-discovery ()
+  ;; Use actual local Git repositories, not the user's configured roots.
+  ;; No fetch, credentials or network access is involved.
+  (require 'magit)
+  (let* ((root (make-temp-file "rvf-magit-repos-" t))
+         (first (expand-file-name "first/" root))
+         (second (expand-file-name "group/second/" root))
+         (outside (expand-file-name "group/not-a-repo/" root))
+         (missing (expand-file-name "missing/" root)))
+    (unwind-protect
+        (progn
+          (dolist (dir (list first second))
+            (make-directory dir t)
+            (let ((default-directory dir))
+              (should (= 0 (process-file "git" nil nil nil "init" "-q")))))
+          (make-directory outside t)
+          (let ((magit-repository-directories
+                 (list (cons root 2) (cons missing 1))))
+            (should (equal (sort (magit-list-repos) #'string-lessp)
+                           (sort (list first second) #'string-lessp))))
+          (let ((magit-repository-directories (list (cons root 1))))
+            (should (equal (magit-list-repos) (list first))))
+          (should (eq (key-binding (kbd "C-c m")) 'magit-status))
+          (should (eq (key-binding (kbd "C-c M")) 'magit-list-repositories)))
+      (delete-directory root t))))
