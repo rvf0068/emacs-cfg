@@ -31,5 +31,8 @@ Lisp file are ignored by Git. Do not put actual credentials here.
 ;; Optional: restore PDF Tools' installation prompt during startup.
 ;; (setq my-pdf-tools-offer-install t)
 ;; (setq pdf-info-epdfinfo-program "/usr/bin/epdfinfo")
+;; Optional Elfeed settings (enable elfeed-org explicitly before elfeed).
+;; (setq rmh-elfeed-org-files '("~/Documents/feeds.org"))
+;; (setq my-elfeed-latex-auto-preview nil)
 ;; Put your existing private package and GPTel configuration here.
 #+end_src
