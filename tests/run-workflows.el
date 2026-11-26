@@ -33,7 +33,11 @@
   (unless (file-regular-p (straight--build-cache-file))
     (error "Straight did not persist its build cache")))
 
-(when (getenv "RVF_BENCHMARK_GC_POLICY")
+(defvar rvf/benchmark-gc-policy
+  (let ((policy rvf/benchmark-gc-policy))
+    (unless (or (null policy) (string-empty-p policy)) policy)))
+
+(when rvf/benchmark-gc-policy
   (load (expand-file-name "tests/startup-benchmark.el" user-emacs-directory)
         nil 'nomessage))
 
@@ -52,7 +56,7 @@
                     (let ((start (float-time))
                           (gc-start gcs-done)
                           (gc-seconds-start gc-elapsed))
-                      (if-let* ((policy (getenv "RVF_BENCHMARK_GC_POLICY")))
+                      (if-let* ((policy rvf/benchmark-gc-policy))
                           (rvf/benchmark-with-gc-policy
                            policy #'rvf/test-load-configuration)
                         (rvf/test-load-configuration))
@@ -75,7 +79,7 @@
            ((equal (getenv "RVF_BENCHMARK_PHASE") "measure")
             (unless (featurep 'startup-benchmark)
               (load (expand-file-name "tests/startup-benchmark.el" user-emacs-directory)))
-            (when-let* ((policy (getenv "RVF_BENCHMARK_GC_POLICY")))
+            (when-let* ((policy rvf/benchmark-gc-policy))
               ;; Measure the deferred collection separately.  Both policies
               ;; receive the same collection before the first-use probes.
               (message "RVF GC POLICY %s (restored threshold %d bytes)"
