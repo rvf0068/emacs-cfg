@@ -17,33 +17,46 @@ jobs:
     timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
-      - name: Install graphical Emacs and native dependencies
+        with:
+          persist-credentials: false
+      - name: Determine image refresh period
+        id: image
+        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+      - name: Restore prebuilt dependency image
+        id: image-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/emacs-regression-image.tar.gz
+          key: emacs-regression-image-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.image.outputs.month }}-${{ hashFiles('.github/ci/Dockerfile') }}
+      - name: Load or build the dependency image
+        shell: bash
         run: |
-          sudo apt-get update
-          # Keep the validated TeX dependency closure: previews fail without
-          # some recommended packages even though kpsewhich checks pass.
-          sudo apt-get install -y emacs-gtk xvfb xauth libzmq3-dev build-essential pkg-config libpoppler-glib-dev libpng-dev zlib1g-dev elpa-pdf-tools-server texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science dvisvgm latexmk biber aspell-en ripgrep
-          emacs --version
-          kpsewhich lxfonts.sty
-          kpsewhich mylatexformat.ltx
-          epdfinfo=$(find /usr -type f -name epdfinfo -print -quit)
-          test -n "$epdfinfo"
-          echo "RVF_EPDFINFO=$epdfinfo" >> "$GITHUB_ENV"
-      - name: Install Python kernel and research dependencies
-        run: |
-          python3 -m venv "$RUNNER_TEMP/workflow-venv"
-          "$RUNNER_TEMP/workflow-venv/bin/python" -m pip install jupyter-core jupyter-client ipykernel matplotlib numpy networkx
-          "$RUNNER_TEMP/workflow-venv/bin/jupyter" --version
-          "$RUNNER_TEMP/workflow-venv/bin/jupyter-kernelspec" --version
-          echo "$RUNNER_TEMP/workflow-venv/bin" >> "$GITHUB_PATH"
-      - name: Validate dependency diagnostics
-        run: |
-          make doctor
-          if make doctor-unit EMACS=/nonexistent/emacs > "$RUNNER_TEMP/doctor-error.log" 2>&1; then
-            echo "Missing executable was not detected" >&2
-            exit 1
+          archive="$RUNNER_TEMP/emacs-regression-image.tar.gz"
+          if [[ -f "$archive" ]]; then
+            echo "Loading cached dependency image"
+            time docker load --input "$archive"
+          else
+            echo "No cached image: building the external dependencies"
+            time docker build --pull --tag emacs-regression:ci .github/ci
+            # Cache only the dependency image, never the test checkout or home.
+            time (docker save emacs-regression:ci | gzip -1 > "$archive")
+            du -h "$archive"
           fi
-          cat "$RUNNER_TEMP/doctor-error.log"
-          grep -F "ERROR: Required executable not found: /nonexistent/emacs" "$RUNNER_TEMP/doctor-error.log"
-      - name: Run real Org workflows and ERT regression tests
-        run: time make test
+          docker image inspect emacs-regression:ci --format 'Image {{.Id}}, bytes {{.Size}}'
+      - name: Validate dependency diagnostics and run full regression
+        shell: bash
+        run: |
+          time docker run --rm --init \
+            --mount "type=bind,source=$GITHUB_WORKSPACE,target=/workspace,readonly" \
+            emacs-regression:ci bash -euo pipefail -c '
+              make doctor EMACS=emacs UV_PROJECT=
+              log=$(mktemp)
+              if make doctor-unit EMACS=/nonexistent/emacs UV_PROJECT= > "$log" 2>&1; then
+                echo "Missing executable was not detected" >&2
+                exit 1
+              fi
+              cat "$log"
+              grep -F "ERROR: Required executable not found: /nonexistent/emacs" "$log"
+              rm -f "$log"
+              time make test EMACS=emacs UV_PROJECT=
+            '
