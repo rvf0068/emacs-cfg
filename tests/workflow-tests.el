@@ -60,6 +60,25 @@
     (when absent
       (should (equal org-roam-db-location (rvf/local-data-path "org-roam.db"))))))
 
+(ert-deftest rvf/workflow-babel-initialization ()
+  (should (featurep 'ob-python))
+  (should (featurep 'ob-latex))
+  (should (fboundp 'org-babel-execute:python))
+  (should (fboundp 'org-babel-execute:latex))
+  (should (alist-get 'python org-babel-load-languages))
+  (should (alist-get 'latex org-babel-load-languages))
+  (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
+      (progn
+        (should-not (rvf/jupyter-available-p))
+        (should-not (featurep 'ob-jupyter))
+        (should-not (featurep 'jupyter-compat)))
+    (should (rvf/jupyter-available-p))
+    (should (featurep 'ob-jupyter))
+    (should (featurep 'jupyter-compat))
+    (should (advice-member-p #'rvf/jupyter-get-client-compat 'jupyter-get-client))
+    (should (advice-member-p #'my-safe-jupyter-org-completion-at-point
+                             'jupyter-org-completion-at-point))))
+
 (defun rvf/test-wait-for (predicate seconds)
   "Wait up to SECONDS for PREDICATE, servicing real process output."
   (let ((deadline (+ (float-time) seconds)))
@@ -130,23 +149,56 @@ invoke the two hooks which normally surround each editing command."
       (insert-file-contents-literally (plist-get (cdr spec) :file))
       (secure-hash 'sha256 (current-buffer)))))
 
+(defun rvf/test-preview-jobs-pending-p (buffer)
+  "Whether Org's asynchronous queue still contains work for BUFFER.
+The pinned Org implementation tracks active and queued tasks in
+these two lists.  Each task carries the originating Org buffer in
+its processing-info plist."
+  (cl-some (lambda (task)
+             (eq (plist-get (plist-get (cdr task) :info) :org-buffer)
+                 buffer))
+           (append org-async--stack org-async--wait-queue)))
+
 (ert-deftest rvf/workflow-latex-edit-regenerates-preview ()
   (let* ((file (make-temp-file "rvf-preview-edit-" nil ".org"))
-         (buffer (find-file-noselect file)))
+         ;; Different formulas in the two startup scenarios ensure both
+         ;; exercise cold rendering, not the previous process's cache.
+         (number (if (equal (getenv "RVF_TEST_PERSONAL") "absent") "2718" "3141"))
+         (buffer nil)
+         (finished nil)
+         (org-latex-preview-process-finish-functions
+          (cons (lambda (status _process-buffer info)
+                  (when (eq (plist-get info :org-buffer) buffer)
+                    (push status finished)))
+                org-latex-preview-process-finish-functions)))
     (unwind-protect
         (save-window-excursion
+          ;; Write the initial fixture before enabling Org mode.
+          ;; Inserting a complete formula into a live Org buffer already
+          ;; queues a preview. An additional explicit request would race
+          ;; with it, potentially overwriting the regenerated image.
+          (with-temp-file file
+            (insert "Before\n\nInline \\(x+" number "\\) after.\n"))
+          (setq buffer (find-file-noselect file))
           (switch-to-buffer buffer)
           (should org-latex-preview-mode)
-          ;; Inline editing, not live side-by-side block rendering.
-          (insert "Before\n\nInline \\(x+1\\) after.\n")
-          (save-buffer)
           (goto-char (point-min))
           (org-latex-preview '(16))
           (should (rvf/test-wait-for
-                   (lambda () (= 1 (length (rvf/test-preview-images)))) 120))
+                   (lambda ()
+                     (and finished
+                          (not (rvf/test-preview-jobs-pending-p buffer))
+                          (= 1 (length (rvf/test-preview-images)))))
+                   120))
+          ;; More than one completion notification can be delivered by
+          ;; the async machinery.  Require successful completion and a
+          ;; drained queue, not a particular callback count.
+          (should (cl-every #'zerop finished))
+          (setq finished nil)
           (let* ((ov (rvf/test-preview-overlay))
                  (original (rvf/test-image-digest (overlay-get ov 'display))))
             (should original)
+            (should-not (overlay-get ov 'help-echo))
             ;; Enter the rendered fragment through the native cursor hooks.
             (rvf/test-preview-command
              (lambda () (goto-char (+ 3 (overlay-start ov)))))
@@ -160,19 +212,31 @@ invoke the two hooks which normally surround each editing command."
                (delete-char 1)
                (insert "\\mathbb{Q}")))
             (should (eq (overlay-get ov 'org-preview-state) 'modified))
+            (should (string-search (concat "\\(\\mathbb{Q}+" number "\\)")
+                                   (buffer-string)))
             (rvf/test-preview-command
              (lambda () (goto-char (point-max))))
-            (should
-             (rvf/test-wait-for
-              (lambda ()
-                (let* ((current (rvf/test-preview-overlay))
-                       (image (and current (overlay-get current 'display)))
-                       (digest (rvf/test-image-digest image)))
-                  (and digest (not (equal digest original))
-                       (not (overlay-get current 'org-view-text))
-                       (not (overlay-get current 'help-echo)))))
-              120))
-            (should (string-search "\\(\\mathbb{Q}+1\\)" (buffer-string)))))
+            (should-not (overlay-get ov 'org-view-text))
+            (let ((regenerated
+                   (rvf/test-wait-for
+                    (lambda ()
+                      (let* ((current (rvf/test-preview-overlay))
+                             (image (and current (overlay-get current 'display)))
+                             (digest (rvf/test-image-digest image)))
+                        (and finished
+                             (not (rvf/test-preview-jobs-pending-p buffer))
+                             digest (not (equal digest original))
+                             (not (overlay-get current 'org-view-text))
+                             (not (overlay-get current 'help-echo)))))
+                    120)))
+              (unless regenerated
+                (let ((current (rvf/test-preview-overlay)))
+                  (message "Preview regeneration diagnostic: finished=%S pending=%S original=%S properties=%S"
+                           finished (rvf/test-preview-jobs-pending-p buffer)
+                           original
+                           (and current (overlay-properties current)))))
+              (should regenerated)
+              (should (cl-every #'zerop finished)))))
       (when (buffer-live-p buffer)
         (with-current-buffer buffer (set-buffer-modified-p nil))
         (kill-buffer buffer))
@@ -261,6 +325,41 @@ invoke the two hooks which normally surround each editing command."
         (kill-buffer buffer))
       (delete-directory root t))))
 
+(ert-deftest rvf/workflow-jupyter-dedicated-kernel ()
+  (let* ((configured (not (equal (getenv "RVF_TEST_PERSONAL") "absent")))
+         (dir (make-temp-file "rvf-dedicated-notes-" t))
+         (file (expand-file-name "research.org" dir))
+         (python (getenv "RVF_TEST_DEDICATED_PYTHON")))
+    (unwind-protect
+        (progn
+          (should (file-executable-p python))
+          (when configured
+            (should (equal jupyter-executable (getenv "RVF_TEST_JUPYTER")))
+            ;; Verify the configured CLI can be invoked without exec-path.
+            (let ((exec-path nil))
+              (should (stringp (jupyter-command "--version"))))
+            (should (equal (alist-get :kernel org-babel-default-header-args:jupyter-python)
+                           "rvf-dedicated")))
+          (with-temp-file file
+            (insert "#+PROPERTY: header-args:jupyter-python :session rvf-dedicated-test :results replace"
+                    (if configured "" " :kernel rvf-dedicated") "\n\n"
+                    "#+name: interpreter\n#+begin_src jupyter-python\n"
+                    "import os, sys\nassert sys.executable == os.environ['RVF_TEST_DEDICATED_PYTHON'], sys.executable\n1\n#+end_src\n\n"
+                    "#+name: package\n#+begin_src jupyter-python\n"
+                    "import rvf_kernel_fixture\nrvf_kernel_fixture.VALUE\n#+end_src\n"))
+          (with-current-buffer (find-file-noselect file)
+            ;; This is an ordinary notes directory, not a uv workspace.
+            (should-not rvf/uv-environment)
+            (rvf/test-execute-named "interpreter")
+            (should (rvf/test-result-matches
+                     "interpreter" "^: +1[ \t]*$"))
+            (rvf/test-execute-named "package")
+            (should (rvf/test-result-matches "package" "^: +12345[ \t]*$"))))
+      (when-let* ((buffer (get-file-buffer file)))
+        (with-current-buffer buffer (set-buffer-modified-p nil))
+        (kill-buffer buffer))
+      (delete-directory dir t))))
+
 (ert-deftest rvf/workflow-jupyter-real-kernel ()
   (should (executable-find "jupyter"))
   (let* ((dir (make-temp-file "rvf-jupyter-" t))
@@ -268,6 +367,8 @@ invoke the two hooks which normally surround each editing command."
     (unwind-protect
         (with-current-buffer (find-file-noselect file)
           (insert "#+PROPERTY: header-args:jupyter-python :session rvf-test :kernel rvf-regression :results replace\n\n"
+                  "#+name: base-interpreter\n#+begin_src jupyter-python\n"
+                  "import os, sys\nassert sys.executable == os.environ['RVF_TEST_BASE_PYTHON'], sys.executable\n1\n#+end_src\n\n"
                   "#+name: graph\n#+begin_src jupyter-python\n"
                   "import networkx as nx\nimport numpy as np\n"
                   "G = nx.octahedral_graph()\nG.number_of_nodes()\n#+end_src\n\n"
@@ -281,6 +382,10 @@ invoke the two hooks which normally surround each editing command."
           ;; ob-jupyter creates language aliases in org-mode-hook, not at load time.
           (should (featurep 'ob-jupyter))
           (should (fboundp 'org-babel-execute:jupyter-python))
+          ;; Explicit kernel header must override a configured default.
+          (rvf/test-execute-named "base-interpreter")
+          (should (rvf/test-result-matches
+                   "base-interpreter" "^: +1[ \t]*$"))
           (rvf/test-execute-named "graph")
           (should (rvf/test-result-matches "graph" "^: +6[ \t]*$"))
           (rvf/test-execute-named "reuse")

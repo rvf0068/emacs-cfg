@@ -33,7 +33,7 @@
                 (error (message "Integration startup failed: %S" err) nil))
           (let* ((mode (getenv "RVF_TEST_MODE"))
                  (selector (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
-                               "^rvf/workflow-personal-settings$"
+                               "^rvf/workflow-\\(personal-settings\\|babel-initialization\\|jupyter-uv-workspace-python\\|latex-real-previews\\)$"
                              (pcase mode
                                ("latex" "^rvf/workflow-latex-")
                                ("jupyter" "^rvf/workflow-jupyter-")

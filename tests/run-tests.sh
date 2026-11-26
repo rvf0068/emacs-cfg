@@ -38,7 +38,9 @@ cat > "$RVF_TEST_DIR/personal.org" <<'EOF'
 #+begin_src emacs-lisp
 (setq my-notes-directory (expand-file-name "notes/" "~")
       my-library-path (expand-file-name "library/" "~")
-      my-bibliography (expand-file-name "library/test.bib" "~"))
+      my-bibliography (expand-file-name "library/test.bib" "~")
+      my-jupyter-executable (getenv "RVF_TEST_JUPYTER")
+      my-jupyter-python-kernel "rvf-dedicated")
 #+end_src
 EOF
 # Bootstrap the exact recorded straight revision.
@@ -50,8 +52,11 @@ fi
 git clone --quiet https://github.com/radian-software/straight.el.git "$RVF_TEST_DIR/straight/repos/straight.el"
 git -C "$RVF_TEST_DIR/straight/repos/straight.el" checkout --quiet "$pin"
 if [[ "$mode" != unit ]]; then
-    command -v jupyter
+    export RVF_TEST_JUPYTER="$(command -v jupyter)"
+    export RVF_TEST_BASE_PYTHON="$(python -c 'import sys; print(sys.executable)')"
+    export RVF_TEST_DEDICATED_PYTHON="$HOME/dedicated-kernel/bin/python"
     python -m ipykernel install --user --name rvf-regression --display-name "Emacs regression"
+    python "$root/tests/create-dedicated-kernel.py" "$HOME/dedicated-kernel"
 fi
 cd "$RVF_TEST_DIR"
 status=0
@@ -70,7 +75,8 @@ if [[ "$mode" != unit ]]; then
         cat > "$RVF_TEST_DIR/personal.org" <<'EOF'
 #+begin_src emacs-lisp
 (setq my-notes-directory (expand-file-name "unavailable-notes/" "~")
-      my-library-path (expand-file-name "unavailable-library/" "~"))
+      my-library-path (expand-file-name "unavailable-library/" "~")
+      my-jupyter-executable (expand-file-name "unavailable-jupyter" "~"))
 #+end_src
 EOF
         # Preserve the database from the first startup. Neither Org Roam nor

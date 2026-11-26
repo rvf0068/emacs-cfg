@@ -168,51 +168,44 @@ session.
 
 *** Make Jupyter available when Emacs starts normally
 
-The current public configuration enables emacs-jupyter only if
-=(executable-find "jupyter")= succeeds during initialization.
-After launching Emacs normally, evaluate this expression with =M-:=:
+Ordinary Python and LaTeX Babel blocks do not require Jupyter.
+The public configuration enables emacs-jupyter when its configured
+executable is available at startup.
+
+If the Jupyter CLI is already discoverable, you need not change anything.
+Check =(executable-find "jupyter")= with =M-:=.
+Otherwise, set its executable explicitly in =personal.org=, for example:
 
 #+begin_src emacs-lisp
-(executable-find "jupyter")
+(setq my-jupyter-executable
+      "~/Python/pycliques-project/.venv/bin/jupyter")
 #+end_src
 
-If the result is nil, arrange for a Jupyter installation to be
-available on Emacs's PATH. For example, if Jupyter is already installed
-in the monorepo's environment, the following optional private setting
-makes that executable discoverable before the public Jupyter
-declaration is evaluated:
+This uses the CLI directly without adding the monorepo to the global
+PATH or changing ordinary Python resolution. Restart Emacs. The command
+=M-x rvf/describe-python-environment= reports the configured Jupyter
+command and whether it is available. The Jupyter CLI and the kernel's
+Python interpreter need not be in the same environment.
 
-#+begin_src emacs-lisp
-(let ((bin (expand-file-name "~/Python/pycliques-project/.venv/bin")))
-  (when (file-executable-p (expand-file-name "jupyter" bin))
-    (add-to-list 'exec-path bin)
-    (setenv "PATH" (concat bin path-separator (getenv "PATH")))))
-#+end_src
-
-Put this in =personal.org= and restart Emacs. It adds the project's
-executables to the process-wide search path; skip it if Jupyter is
-already available from a separate installation. A named kernelspec
-still controls which interpreter actually executes a block.
+If the optional setting is nil, the existing upstream
+=jupyter-executable= setting (normally ="jupyter"=) is honored.
+An absolute CLI path is intended for local Jupyter; remote usage may
+require a host-specific executable configuration.
 
 *** Optional default kernel
 
-If most Jupyter Python blocks use the monorepo, the named kernel can
-become the default without putting a kernel header in every document.
-For example, in =personal.org=:
+If most Jupyter Python blocks use the monorepo, register the named kernel
+as above and set this in =personal.org=:
 
 #+begin_src emacs-lisp
-(with-eval-after-load 'ob-jupyter
-  (unless (boundp 'org-babel-default-header-args:jupyter-python)
-    (setq org-babel-default-header-args:jupyter-python
-          (copy-tree org-babel-default-header-args:jupyter)))
-  (setf (alist-get :kernel org-babel-default-header-args:jupyter-python)
-        "pycliques"))
+(setq my-jupyter-python-kernel "pycliques")
 #+end_src
 
-Explicit kernel headers in documents and blocks take precedence.
-This is optional: if you often use several environments, leave the
-default unchanged and choose kernels explicitly. Restart Emacs after
-changing this setting.
+Restart Emacs. Explicit kernel headers in documents and blocks take
+precedence, and already running sessions are not redirected. This is
+optional: if you often use several environments, leave the setting nil
+and choose kernels explicitly. Existing customizations of Jupyter header
+arguments are retained when the new setting is omitted.
 
 *** Comparison
 
@@ -251,7 +244,13 @@ require the same Python and TeX dependencies. The full suite and
 =make test-workflows= run the real graphical workflows both with temporary
 private settings and without =personal.org=. They also test startup with
 an unavailable explicitly configured notes directory and check that the
-original Org Roam database is unchanged.
+original Org Roam database is unchanged. The unavailable-directory scenario
+also disables Jupyter and checks that ordinary Python and native LaTeX
+previews still work. The regular graphical runs exercise a dedicated
+kernel in a separate virtual environment with a test-only module, as well
+as the original registered kernel. The test environment reuses installed
+Python dependencies through a test-only .pth file, without downloading
+another copy of them.
 The graphical tests require graphical Emacs with SVG and dynamic module support,
 xvfb-run, xauth, GNU timeout, TeX Live (including lxfonts, AMS packages and
 mylatexformat), dvisvgm, and Python with Jupyter, IPykernel, NumPy, NetworkX
