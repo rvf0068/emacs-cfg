@@ -500,16 +500,7 @@ This section details the modern completion system composed of Vertico, Orderless
   :bind
   (("C-=" . embark-act))
   :config
-  ;; Define the custom action
-  (defun my-embark-org-insert-link (path)
-    "An embark action to insert an org-mode link to a file.
-The PATH is supplied automatically by Embark.
-The description is set to the file name without its extension."
-    (let ((description (file-name-sans-extension (file-name-nondirectory path))))
-      ;; Manually format and insert the link string to avoid
-      ;; org-insert-link version compatibility issues.
-      (insert (format "[[file:%s][%s]]" path description))))
-
+  (require 'academic-editing)
   ;; Add the keybinding to Embark's file map
   (define-key embark-file-map (kbd "L") #'my-embark-org-insert-link))
 
@@ -777,7 +768,7 @@ another Citar command has been used. For example, =e= opens the BibTeX entry.
 
 *** bibtex
 
-=bibtex-mode= is built-in and configured to use =bibretrieve=. A custom function, =bibtex-generate-autokey=, is defined to format BibTeX keys as =year-author-title=.
+=bibtex-mode= is built-in and configured to use =bibretrieve=. The named helper =rvf/bibtex-year-first-autokey= retains the =year-author-title= convention using BibTeX's native name, year and title extraction. It also honors the native key prefix and before-presentation function. Existing citation keys are never rewritten by this configuration.
 
 #+begin_src emacs-lisp
 (use-package bibtex
@@ -789,29 +780,16 @@ another Citar command has been used. For example, =e= opens the BibTeX entry.
   :custom
   (bibtex-autokey-year-title-separator "-")
   (bibtex-autokey-year-length 4)
-  (bibtex-autokey-names nil)
+  (bibtex-autokey-names 'infty)
   (bibtex-autokey-name-separator "-")
   (bibtex-autokey-name-year-separator "-")
   (bibtex-autokey-titleword-separator "-")
-  (bibtex-autokey-titleword-length "All")
-  (bibtex-autokey-titlewords "All")
-  (bibtex-autokey-titleword-ignore "")
+  (bibtex-autokey-titleword-length 'infty)
+  (bibtex-autokey-titlewords 'infty)
+  (bibtex-autokey-titleword-ignore nil)
   :config
-  (defun bibtex-generate-autokey ()
-    (let* ((names (bibtex-autokey-get-names))
-           (year (bibtex-autokey-get-year))
-           (title (bibtex-autokey-get-title))
-           (autokey (concat year
-                            (unless (or (equal names "")
-					(equal year ""))
-                              bibtex-autokey-name-year-separator)
-                            names
-                            (unless (or (and (equal names "")
-                                             (equal year ""))
-					(equal title ""))
-                              bibtex-autokey-year-title-separator)
-                            title)))
-      autokey)))
+  (require 'academic-editing)
+  (rvf/bibtex-enable-year-first-autokey))
 #+end_src
 
 ** Python
