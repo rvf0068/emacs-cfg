@@ -474,7 +474,10 @@ features immediately after loading early-init.el and init.el. These
 measure configuration loading in the graphical test harness, not the
 complete wall time from launching Emacs to its first displayed frame.
 The first process can include package installation and builds; later
-processes reuse the prepared package tree.
+processes reuse the prepared package tree. The runner explicitly finalizes
+the pinned straight transaction, because it does not enter the interactive
+command loop that normally persists build-cache metadata. The timing
+includes this finalization. A missing persisted build cache is an error.
 
 For a controlled comparison of two revisions run:
 
@@ -497,10 +500,15 @@ not part of the default regression suite. In GitHub Actions, manually
 run the Emacs regression workflow with =benchmark_startup= enabled to
 execute the same benchmark inside the CI dependency image.
 
-The warm processes reuse installed package files, not a running Emacs.
-Native compilation, operating-system caches and background work may
-still affect timings. Compare medians across several runs under the
-same conditions. The first-file probes measure synchronous visiting
+The warm processes reuse installed package files and build metadata,
+not a running Emacs. Only the optional benchmark disables asynchronous
+native compilation, to measure a stable byte-compiled configuration
+without competing background compilation jobs. Normal regression runs
+and everyday Emacs startup retain their native compilation policy. The
+runner warns when a measured startup still rebuilds packages; do not
+compare such a timing with a clean warm startup. Operating-system caches
+and other background work may still affect timings. Compare medians
+across several runs under the same conditions. The first-file probes measure synchronous visiting
 and mode initialization, not completion of asynchronous previews;
 the Citar probe measures data retrieval rather than interactive
 completion, and the Jupyter probe includes the first kernel evaluation.
