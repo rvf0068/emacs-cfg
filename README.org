@@ -91,6 +91,32 @@ Existing notes containing local variables still behave as before. The
 automated tests cover resource discovery and template expansion, not
 interactive Org Noter reading sessions or PDF rendering.
 
+** Reading and annotating PDFs
+
+In a graphical Emacs, PDF Tools activates automatically if its native
+server =epdfinfo= works. Otherwise the ordinary PDF viewer remains
+available and a warning explains how to install the server. Use
+=M-x pdf-info-check-epdfinfo= to diagnose the native executable and
+=M-x pdf-tools-install= to install/rebuild it explicitly. If you prefer
+the former automatic installation prompt, put
+=(setq my-pdf-tools-offer-install t)= in =personal.org=. The upstream
+=pdf-info-epdfinfo-program= option can point to a specific executable.
+
+From a literature note, place point on the =Org noter notes= heading
+(or a descendant) and use =F5 n= to start Org Noter. If the PDF path
+is missing or invalid, Org Noter asks you to select a document;
+=C-u C-u F5 n= explicitly selects a replacement. From a PDF buffer,
+=F5 n= searches for corresponding notes using Org Noter's own search
+rules (including =my-notes-directory=); for differently named PDFs,
+starting from the Citar literature note is generally more reliable.
+Use =C-M-.= in a session to synchronize the current note.
+The existing automatic last-reading-location setting is preserved.
+
+The graphical regression generates a small two-page PDF locally and
+checks actual PDF Tools activation, page count, text extraction,
+rendering and Org Noter's document-property resolution. It does not
+exercise the full interactive session/frame lifecycle.
+
 * Magit repository dashboard
 
 =C-c m= still opens the current repository's status. Use =C-c M=
