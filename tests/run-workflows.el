@@ -24,6 +24,19 @@
         ((string-match-p "rebuild.*epdfinfo" prompt) t)
         (t (error "Unexpected installation prompt: %s" prompt))))
 
+(defun rvf/test-load-configuration ()
+  "Load the public configuration and persist straight's build metadata."
+  (let ((early (expand-file-name "early-init.el" user-emacs-directory)))
+    (when (file-exists-p early) (load early nil 'nomessage)))
+  (load user-init-file nil 'nomessage)
+  (straight--transaction-finalize)
+  (unless (file-regular-p (straight--build-cache-file))
+    (error "Straight did not persist its build cache")))
+
+(when (getenv "RVF_BENCHMARK_GC_POLICY")
+  (load (expand-file-name "tests/startup-benchmark.el" user-emacs-directory)
+        nil 'nomessage))
+
 (let ((status 1))
   (unwind-protect
       (cl-letf (((symbol-function 'y-or-n-p) #'rvf/test-install-answer)
@@ -39,14 +52,10 @@
                     (let ((start (float-time))
                           (gc-start gcs-done)
                           (gc-seconds-start gc-elapsed))
-                      (let ((early (expand-file-name "early-init.el" user-emacs-directory)))
-                        (when (file-exists-p early) (load early nil 'nomessage)))
-                      (load user-init-file nil 'nomessage)
-                      ;; Finalize the pinned straight transaction explicitly
-                      ;; so the next process can reuse its build metadata.
-                      (straight--transaction-finalize)
-                      (unless (file-regular-p (straight--build-cache-file))
-                        (error "Straight did not persist its build cache"))
+                      (if-let* ((policy (getenv "RVF_BENCHMARK_GC_POLICY")))
+                          (rvf/benchmark-with-gc-policy
+                           policy #'rvf/test-load-configuration)
+                        (rvf/test-load-configuration))
                       (message "RVF STARTUP %s %.3f s (GCs %d, GC %.3f s)"
                                (or (getenv "RVF_BENCHMARK_PHASE")
                                    (getenv "RVF_TEST_PERSONAL") "configured")
@@ -64,7 +73,14 @@
            ((equal (getenv "RVF_BENCHMARK_PHASE") "warmup")
             (setq status 0))
            ((equal (getenv "RVF_BENCHMARK_PHASE") "measure")
-            (load (expand-file-name "tests/startup-benchmark.el" user-emacs-directory))
+            (unless (featurep 'startup-benchmark)
+              (load (expand-file-name "tests/startup-benchmark.el" user-emacs-directory)))
+            (when-let* ((policy (getenv "RVF_BENCHMARK_GC_POLICY")))
+              ;; Measure the deferred collection separately.  Both policies
+              ;; receive the same collection before the first-use probes.
+              (message "RVF GC POLICY %s (restored threshold %d bytes)"
+                       policy gc-cons-threshold)
+              (rvf/benchmark-measure "post-startup-collection" #'garbage-collect))
             (rvf/benchmark-first-use)
             (setq status 0))
            (t
