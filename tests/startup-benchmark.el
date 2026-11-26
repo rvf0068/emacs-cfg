@@ -2,6 +2,9 @@
 
 (require 'cl-lib)
 
+(defvar citar-bibliography)
+(defvar org-confirm-babel-evaluate)
+
 (defun rvf/benchmark-measure (label function)
   "Run FUNCTION, return its value and report wall time and GC cost."
   (let ((start (float-time))
@@ -73,6 +76,9 @@ remote Git operations or authenticated services are used."
                (beginning-of-line)
                (let ((org-confirm-babel-evaluate nil))
                  (org-babel-execute-src-block))
+               (goto-char (point-min))
+               (search-forward "#+begin_src jupyter-python")
+               (beginning-of-line)
                (let ((result (org-babel-where-is-src-block-result)))
                  (unless (and result
                               (save-excursion
