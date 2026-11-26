@@ -1,0 +1,72 @@
+;;; math-snippets-tests.el --- Actual mathematical snippet expansions -*- lexical-binding: t; -*-
+
+(require 'ert)
+(require 'cl-lib)
+(require 'cross-refs)
+(require 'ox-latex)
+(require 'yasnippet)
+
+(ert-deftest rvf/math-snippets-name-only-navigation-and-export ()
+  ;; Load the actual checked-in snippets rather than recreating templates.
+  (let ((yas-indent-line 'fixed)
+        (org-link-search-must-match-exact-headline t)
+        (org-export-use-babel nil))
+    (yas-load-directory (expand-file-name "snippets" user-emacs-directory))
+    (dolist (case '(("cor" "cor:" "corollary")
+                    ("def" "def:" "definition")
+                    ("equ" "eq:" "equation")
+                    ("exa" "exa:" "exampleblock")
+                    ("lem" "lem:" "lemma")
+                    ("pf" "prf:" "proof")
+                    ("pro" "pro:" "proposition")
+                    ("rem" "rem:" "remark")
+                    ("thm" "thm:" "theorem")))
+      (ert-info ((format "Snippet: %s" (car case)))
+        (with-temp-buffer
+          (org-mode)
+          (yas-minor-mode 1)
+          (let* ((key (nth 0 case))
+                 (prefix (nth 1 case))
+                 (environment (nth 2 case))
+                 (label (concat prefix "sample"))
+                 (prompts 0)
+                 (body (if (equal key "equ") "x=y" "Mathematical text.")))
+            (insert key)
+            ;; Stub only the user input.  Exercise the real uniqueness
+            ;; helper, snippet lookup, evaluation, and expansion.
+            (cl-letf (((symbol-function 'read-string)
+                       (lambda (prompt &rest _)
+                         (should (string-search prefix prompt))
+                         (cl-incf prompts)
+                         "sample")))
+              (should (yas-expand)))
+            (should (= prompts 1))
+            (insert body)
+            (yas-exit-all-snippets)
+            (should (equal (my/org-ref-labels) (list (cons label body))))
+            (goto-char (point-min))
+            (should (looking-at-p (regexp-quote (concat "#+name: " label))))
+            (should-not (re-search-forward "^[ \t]*#\\+label:" nil t))
+            (goto-char (point-max))
+            (insert "\n\nSee [[" label "]].\n")
+            (search-backward (concat "[[" label "]]"))
+            (forward-char 3)
+            (org-open-at-point)
+            (should (looking-at-p (regexp-quote (concat "#+name: " label))))
+            ;; Check both native generated identifiers and stable user labels.
+            (dolist (prefer '(nil t))
+              (let* ((org-latex-prefer-user-labels prefer)
+                     (latex (org-export-as 'latex nil nil t))
+                     (reference-command
+                      (if (equal key "equ") "\\eqref{" "\\ref{"))
+                     (label-pattern
+                      (concat (regexp-quote "\\label{") "\\([^}]+\\)}")))
+                (should (string-search (concat "\\begin{" environment "}") latex))
+                (should (string-search (concat "\\end{" environment "}") latex))
+                (should (string-match label-pattern latex))
+                (let ((exported-label (match-string 1 latex)))
+                  (when prefer (should (equal exported-label label)))
+                  (should (string-search
+                           (concat reference-command exported-label "}") latex)))))))))))
+
+;;; math-snippets-tests.el ends here

@@ -6,8 +6,7 @@
 # condition: (not (org-table-p))
 # group: theorems
 # --
-#+name: pro:`(setq yas-text (my/org-snippet-get-unique-label "pro:"))`
-#+label: pro:`yas-text`
+#+name: pro:`(my/org-snippet-get-unique-label "pro:")`
 #+begin_proposition
 $0
 #+end_proposition

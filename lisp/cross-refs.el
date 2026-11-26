@@ -8,9 +8,9 @@
 (require 'org-element)
 
 ;; Label conventions:
-;; - Special blocks retain both #+name: and #+label: for compatibility.
-;;   Org treats #+label: as an older spelling of #+name:.
-;; - Equations: Use only #+name:
+;; - New special blocks and equations use only #+name: for navigation
+;;   and export. Keep recognizing #+label: in existing documents:
+;;   Org treats it as an older spelling of #+name: during export.
 ;;   Org-mode auto-generates \label{} from #+name: during export
 ;;   An export filter converts \ref{eq:*} to \eqref{eq:*} in LaTeX output
 
