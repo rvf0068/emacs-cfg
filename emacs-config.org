@@ -919,11 +919,12 @@ another Citar command has been used. For example, =e= opens the BibTeX entry.
 
 *** uv environment
 
-This helper function automatically detects and activates the python environment created by =uv= if a =.venv= directory exists in the project root.
+The helper searches upward for a usable project =.venv=, including shared environments above nested workspace package manifests. It stops at the nearest Git repository boundary and skips remote buffers. Python shell, ordinary Org Babel Python, =exec-path= and subprocess environment settings are buffer-local. Use =M-x my/find-uv-venv= to refresh after creating an environment, =M-x rvf/uv-clear-environment= to restore the previous settings, and =M-x rvf/describe-python-environment= to inspect executable resolution. Jupyter kernelspecs and existing sessions are deliberately not changed by this helper.
 
 #+begin_src emacs-lisp
 (require 'uv-env)
 (add-hook 'python-mode-hook #'my/find-uv-venv)
+(add-hook 'python-ts-mode-hook #'my/find-uv-venv)
 (add-hook 'org-mode-hook #'my/find-uv-venv)
 #+end_src
 

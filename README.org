@@ -56,6 +56,25 @@ mode; its lock entry has been removed. If you still have a private declaration
 for it, remove that declaration before freezing again. This does not delete
 any existing local package clone.
 
+* Python project environments
+
+For local Python and Org buffers, =uv-env.el= searches for the nearest
+ancestor with a =pyproject.toml= and an executable =.venv/bin/python=,
+stopping at the closest Git checkout boundary. This handles a shared
+workspace environment above nested package manifests, while preferring a
+usable environment in the package itself. It is a filesystem heuristic
+for conventional uv layouts, not a full uv workspace membership parser.
+Remote files and nonstandard environment locations are not auto-activated.
+
+The Python shell interpreter, ordinary Babel Python command, executable
+search path and subprocess environment are buffer-local. Refresh with
+=M-x my/find-uv-venv=, inspect with =M-x rvf/describe-python-environment=,
+or restore previous settings with =M-x rvf/uv-clear-environment=.
+No environment or package is installed automatically. Explicit Jupyter
+kernelspecs and already running Jupyter/Eglot sessions are not restarted
+or silently redirected by this helper; choose the intended kernel and
+restart an existing language server when changing environments.
+
 * Regression tests
 
 The test suite uses a temporary home directory, copies the public configuration

@@ -222,6 +222,45 @@ invoke the two hooks which normally surround each editing command."
                   (forward-line 1)
                   (looking-at-p regexp))))))
 
+
+(ert-deftest rvf/workflow-jupyter-uv-workspace-python ()
+  ;; A real Python virtual environment, without installing any packages.
+  ;; The regular Jupyter test below still exercises a real kernel separately.
+  (let* ((root (make-temp-file "rvf-uv-workflow-" t))
+         (package (expand-file-name "packages/demo/" root))
+         (file (expand-file-name "research.org" package))
+         (venv (expand-file-name ".venv" root))
+         (python (expand-file-name "bin/python" venv)))
+    (unwind-protect
+        (progn
+          (make-directory package t)
+          (dolist (dir (list root package))
+            (with-temp-file (expand-file-name "pyproject.toml" dir)
+              (insert "[project]\nname = \"demo\"\nversion = \"0.1.0\"\n")))
+          (make-directory (expand-file-name ".git" root))
+          (let ((default-directory root))
+            (with-temp-buffer
+              (should (zerop (process-file "python" nil t nil
+                                           "-m" "venv" "--without-pip" venv)))))
+          (with-temp-file file
+            (insert "#+name: interpreter\n#+begin_src python :results output\n"
+                    "import sys, os\nprint(sys.executable)\nprint(os.environ.get('VIRTUAL_ENV'))\n"
+                    "#+end_src\n"))
+          (with-current-buffer (find-file-noselect file)
+            (should (equal rvf/uv-environment venv))
+            (should (equal org-babel-python-command python))
+            (should (equal (executable-find "python") python))
+            (rvf/test-execute-named "interpreter")
+            (should (rvf/test-result-matches
+                     "interpreter" (concat "^: +" (regexp-quote python) "$")))
+            (should (save-excursion
+                      (goto-char (point-min))
+                      (re-search-forward (concat "^: +" (regexp-quote venv) "$") nil t)))))
+      (when-let* ((buffer (get-file-buffer file)))
+        (with-current-buffer buffer (set-buffer-modified-p nil))
+        (kill-buffer buffer))
+      (delete-directory root t))))
+
 (ert-deftest rvf/workflow-jupyter-real-kernel ()
   (should (executable-find "jupyter"))
   (let* ((dir (make-temp-file "rvf-jupyter-" t))
