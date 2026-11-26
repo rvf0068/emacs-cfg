@@ -54,7 +54,8 @@ xvfb-run, xauth, GNU timeout, TeX Live (including lxfonts, AMS packages and
 mylatexformat), dvisvgm, and Python with Jupyter, IPykernel, NumPy, NetworkX
 and Matplotlib on PATH. PDF Tools and ZeroMQ need their native dependencies.
 Set =RVF_EPDFINFO= to the path of a working epdfinfo if it is not on PATH.
-The suite downloads and builds packages in a temporary directory. The unit
+The unit suite also requires ripgrep (=rg=) to verify the Org notes search
+against real files. The suite downloads and builds packages in a temporary directory. The unit
 runner registers its selected dependencies using the literal straight recipes
 in =emacs-config.org=, without evaluating the configuration or eagerly loading
 the packages.

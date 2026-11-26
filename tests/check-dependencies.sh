@@ -2,7 +2,7 @@
 # Sourced before creating the temporary test home.
 rvf_check_dependencies() {
     local mode="$1" requested_emacs="$2" failed=0 cmd package version
-    local -a commands=(git timeout)
+    local -a commands=(git timeout rg)
     if [[ "$mode" != unit ]]; then
         commands+=(xvfb-run Xvfb xauth latex pdflatex dvisvgm kpsewhich python jupyter)
     fi
