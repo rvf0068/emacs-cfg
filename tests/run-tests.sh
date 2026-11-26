@@ -79,6 +79,34 @@ if [[ "$mode" != unit ]]; then
     python "$root/tests/create-dedicated-kernel.py" "$HOME/dedicated-kernel"
 fi
 cd "$RVF_TEST_DIR"
+
+# xvfb-run can pick a display whose previous server is still shutting
+# down. Use distinct starting display numbers for successive launches,
+# retain X server diagnostics, and retry only a pre-init display failure.
+rvf_next_display=99
+run_graphical_emacs() {
+    local attempt result output
+    output="$tmp/graphical-launch.log"
+    for attempt in 1 2; do
+        local display="$rvf_next_display"
+        rvf_next_display=$((rvf_next_display + 10))
+        result=0
+        timeout --kill-after=20s 20m xvfb-run -a -n "$display" -e /dev/stderr \
+            "$emacs" -Q --no-splash --load tests/run-workflows.el \
+            >"$output" 2>&1 || result=$?
+        cat "$output"
+        if ((result == 0)); then return 0; fi
+        if ((attempt == 1)) && [[ ! -e "$RVF_TEST_LOG" ]] &&
+            grep -qiE 'cannot open display|Xvfb failed to start' "$output"; then
+            echo "Retrying graphical launch on a fresh display (X server startup failed)." >&2
+            sleep 1
+        else
+            echo "Graphical Emacs exited with status $result (display start $display)." >&2
+            return "$result"
+        fi
+    done
+}
+
 if [[ "$mode" == benchmark ]]; then
     # The first process prepares the same isolated package tree used by
     # later processes.  The warm timings exclude this preparation.
@@ -91,8 +119,7 @@ if [[ "$mode" == benchmark ]]; then
         local phase="$1" log="$2" policy="${3:-}" result=0
         RVF_BENCHMARK_PHASE="$phase" RVF_TEST_LOG="$log" \
             RVF_BENCHMARK_GC_POLICY="$policy" \
-            timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash \
-                --load tests/run-workflows.el || result=$?
+            run_graphical_emacs || result=$?
         if ((result)); then
             if [[ -f "$log" ]]; then cat "$log"; fi
             return "$result"
@@ -127,7 +154,7 @@ fi
 status=0
 if [[ "$mode" != unit ]]; then
     echo "Running graphical Org workflow tests..."
-    timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash --load tests/run-workflows.el || status=1
+    run_graphical_emacs || status=1
     if [[ "$mode" == all || "$mode" == workflows ]]; then
         echo "Running graphical startup and workflows without personal.org..."
         # A second process reuses the pinned packages, not the configuration
@@ -135,7 +162,7 @@ if [[ "$mode" != unit ]]; then
         mv "$RVF_TEST_DIR/personal.org" "$tmp/personal.org"
         rm -f "$RVF_TEST_DIR/personal.el"
         RVF_TEST_PERSONAL=absent RVF_TEST_LOG="$tmp/emacs-no-personal.log" \
-            timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash --load tests/run-workflows.el || status=1
+            run_graphical_emacs || status=1
         echo "Running graphical startup with an unavailable configured notes directory..."
         cat > "$RVF_TEST_DIR/personal.org" <<'EOF'
 #+begin_src emacs-lisp
@@ -153,7 +180,7 @@ EOF
             status=1
         fi
         RVF_TEST_PERSONAL=missing RVF_TEST_LOG="$tmp/emacs-missing-notes.log" \
-            timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash --load tests/run-workflows.el || status=1
+            run_graphical_emacs || status=1
         if [[ -f "$tmp/original-org-roam.db" ]] && ! cmp -s "$tmp/original-org-roam.db" "$RVF_TEST_DIR/org-roam.db"; then
             echo "ERROR: Startup with missing notes modified the existing Org Roam database" >&2
             status=1
