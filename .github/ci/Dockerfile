@@ -7,6 +7,7 @@ RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
        ca-certificates git curl python3 python3-venv \
        emacs-gtk xvfb xauth libzmq3-dev build-essential pkg-config \
+       autoconf automake libtool \
        libpoppler-glib-dev libpng-dev zlib1g-dev elpa-pdf-tools-server \
        texlive-latex-base texlive-latex-extra texlive-fonts-recommended \
        texlive-fonts-extra texlive-science dvisvgm latexmk biber \

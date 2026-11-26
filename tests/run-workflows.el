@@ -24,6 +24,33 @@
         ((string-match-p "rebuild.*epdfinfo" prompt) t)
         (t (error "Unexpected installation prompt: %s" prompt))))
 
+(defun rvf/test-load-configuration ()
+  "Load the public configuration and persist straight's build metadata."
+  (let ((early (expand-file-name "early-init.el" user-emacs-directory)))
+    (when (file-exists-p early) (load early nil 'nomessage)))
+  (load user-init-file nil 'nomessage)
+  (straight--transaction-finalize)
+  (unless (file-regular-p (straight--build-cache-file))
+    (error "Straight did not persist its build cache")))
+
+(defun rvf/test-prepare-zmq ()
+  "Ensure the actual native ZeroMQ module is loaded before kernel tests.
+The pinned zmq-load can return after an unsuccessful source build
+without signaling an error.  Detect that condition at its source."
+  (when (featurep 'ob-jupyter)
+    (require 'zmq)
+    (zmq-load)
+    (unless (and (featurep 'zmq-core) (boundp 'zmq-REQ))
+      (error "ZeroMQ native module did not load; inspect compilation diagnostics"))))
+
+(defvar rvf/benchmark-gc-policy
+  (let ((policy (getenv "RVF_BENCHMARK_GC_POLICY")))
+    (unless (or (null policy) (string-empty-p policy)) policy)))
+
+(when rvf/benchmark-gc-policy
+  (load (expand-file-name "tests/startup-benchmark.el" user-emacs-directory)
+        nil 'nomessage))
+
 (let ((status 1))
   (unwind-protect
       (cl-letf (((symbol-function 'y-or-n-p) #'rvf/test-install-answer)
@@ -39,14 +66,10 @@
                     (let ((start (float-time))
                           (gc-start gcs-done)
                           (gc-seconds-start gc-elapsed))
-                      (let ((early (expand-file-name "early-init.el" user-emacs-directory)))
-                        (when (file-exists-p early) (load early nil 'nomessage)))
-                      (load user-init-file nil 'nomessage)
-                      ;; Finalize the pinned straight transaction explicitly
-                      ;; so the next process can reuse its build metadata.
-                      (straight--transaction-finalize)
-                      (unless (file-regular-p (straight--build-cache-file))
-                        (error "Straight did not persist its build cache"))
+                      (if-let* ((policy rvf/benchmark-gc-policy))
+                          (rvf/benchmark-with-gc-policy
+                           policy #'rvf/test-load-configuration)
+                        (rvf/test-load-configuration))
                       (message "RVF STARTUP %s %.3f s (GCs %d, GC %.3f s)"
                                (or (getenv "RVF_BENCHMARK_PHASE")
                                    (getenv "RVF_TEST_PERSONAL") "configured")
@@ -62,12 +85,21 @@
                 (error (message "Integration startup failed: %S" err) nil))
           (cond
            ((equal (getenv "RVF_BENCHMARK_PHASE") "warmup")
+            (rvf/test-prepare-zmq)
             (setq status 0))
            ((equal (getenv "RVF_BENCHMARK_PHASE") "measure")
-            (load (expand-file-name "tests/startup-benchmark.el" user-emacs-directory))
+            (unless (featurep 'startup-benchmark)
+              (load (expand-file-name "tests/startup-benchmark.el" user-emacs-directory)))
+            (when-let* ((policy rvf/benchmark-gc-policy))
+              ;; Measure the deferred collection separately.  Both policies
+              ;; receive the same collection before the first-use probes.
+              (message "RVF GC POLICY %s (restored threshold %d bytes)"
+                       policy gc-cons-threshold)
+              (rvf/benchmark-measure "post-startup-collection" #'garbage-collect))
             (rvf/benchmark-first-use)
             (setq status 0))
            (t
+            (rvf/test-prepare-zmq)
             (load (expand-file-name "tests/workflow-tests.el" user-emacs-directory))
             (let* ((mode (getenv "RVF_TEST_MODE"))
                    (selector (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
@@ -95,6 +127,10 @@
     ;; Preserve subprocess diagnostics when a preview fails.  Messages alone
     ;; only report an exit code and cannot identify missing TeX dependencies.
     (unless (zerop status)
+      (when-let* ((compilation (get-buffer "*compilation*")))
+        (message "Native module compilation output:\n%s"
+                 (with-current-buffer compilation
+                   (buffer-substring-no-properties (point-min) (point-max)))))
       (when-let* ((output (get-buffer "*Org Preview LaTeX Output*")))
         (message "Org preview subprocess output:\n%s"
                  (with-current-buffer output

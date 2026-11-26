@@ -15,6 +15,17 @@
                label (- (float-time) start)
                (- gcs-done gc-start) (- gc-elapsed gc-seconds-start)))))
 
+(defun rvf/benchmark-with-gc-policy (policy function)
+  "Call FUNCTION under the startup GC POLICY.
+Baseline uses the ordinary threshold; tuned uses at least 32 MiB
+only for the duration of FUNCTION, including on errors."
+  (pcase policy
+    ("baseline" (funcall function))
+    ("tuned"
+     (let ((gc-cons-threshold (max gc-cons-threshold (* 32 1024 1024))))
+       (funcall function)))
+    (_ (error "Unknown startup GC benchmark policy: %S" policy))))
+
 (defun rvf/benchmark-first-use ()
   "Measure first research operations in the isolated graphical test home.
 The fixture is created before timing.  No user files, external feeds,

@@ -108,20 +108,25 @@
   (should (executable-find "dvisvgm"))
   (let ((file (make-temp-file "rvf-preview-" nil ".org")))
     (unwind-protect
-        (with-current-buffer (find-file-noselect file)
-          (insert "#+LATEX_HEADER: \\usepackage{amssymb}\n\n"
+        (progn
+          ;; Write before enabling live preview mode, avoiding duplicate jobs.
+          (with-temp-file file
+            (insert "#+LATEX_HEADER: \\usepackage{amssymb}\n\n"
                   "Inline \\(\\mathbb{Q}\\) and display:\n\n"
                   "\\[\\widetilde H_i(\\Delta(G);\\mathbb{Q})\\]\n\n"
-                  "\\begin{equation}\nA\\cap B=\\varnothing\n\\end{equation}\n")
-          (save-buffer)
+                  "\\begin{equation}\nA\\cap B=\\varnothing\n\\end{equation}\n"))
+          (with-current-buffer (find-file-noselect file)
           (should (bound-and-true-p org-latex-preview-mode))
           (should (eq org-latex-preview-process-default 'dvisvgm))
           (goto-char (point-min))
           (org-latex-preview '(16))
           (should (rvf/test-wait-for
-                   (lambda () (= 3 (length (rvf/test-preview-images)))) 120))
+                   (lambda ()
+                     (and (= 3 (length (rvf/test-preview-images)))
+                          (not (rvf/test-preview-jobs-pending-p (current-buffer)))))
+                   120))
           (dolist (spec (rvf/test-preview-images))
-            (should (eq (plist-get (cdr spec) :type) 'svg))))
+            (should (eq (plist-get (cdr spec) :type) 'svg)))))
       (when-let* ((buffer (get-file-buffer file))) (kill-buffer buffer))
       (delete-file file))))
 
@@ -262,7 +267,10 @@ its processing-info plist."
             (goto-char (point-min))
             (org-latex-preview '(16))
             (should (rvf/test-wait-for
-                     (lambda () (= 1 (length (rvf/test-preview-images)))) 120))
+                     (lambda ()
+                       (and (= 1 (length (rvf/test-preview-images)))
+                            (not (rvf/test-preview-jobs-pending-p (current-buffer)))))
+                     120))
             (let ((ov (rvf/test-preview-overlay)))
               (should (eq (plist-get (cdr (overlay-get ov 'org-preview-image)) :type)
                           'svg))
@@ -580,6 +588,7 @@ its processing-info plist."
               (should (rvf/test-wait-for
                        (lambda ()
                          (and (not my/elfeed-latex-preview-active)
+                              (not (rvf/test-preview-jobs-pending-p buffer))
                               (rvf/test-preview-images)))
                        30))
               (should (= 1 (length (rvf/test-preview-images)))))))
