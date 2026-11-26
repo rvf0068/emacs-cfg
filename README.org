@@ -434,6 +434,23 @@ redirect an already running session. For Org files outside a workspace,
 a named kernel or the original uv launch approach is still needed to
 use the monorepo. Try both approaches before choosing a personal default.
 
+* ChordPro editing
+
+The historical =lisp/chord-mode.el= library remains available to private
+configuration. To enable it for =.crd= files, use =(require 'chord-mode)=
+in =personal.org=. The existing =<= and =>= keys transpose by one
+semitone down or up; =M-x chord-up= accepts a signed numeric prefix.
+Transposition handles conventional single-accidental roots (including
+flats), chord qualities and slash basses, leaving comments and ordinary
+bracketed section annotations unchanged. It operates on the accessible
+buffer, preserves point, and does nothing for a whole-octave interval.
+Output uses sharp spellings, as before. Unrecognized notation is left
+alone; double accidentals, alternate note-name systems and key directives
+are not transposed.
+
+The existing =chordpack= export commands and their keybindings remain
+unchanged and require that external program.
+
 * Regression tests
 
 The test suite uses a temporary home directory, copies the public configuration
