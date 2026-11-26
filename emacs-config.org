@@ -244,7 +244,7 @@ The [[https://github.com/oantolin/math-delimiters][math-delimiters]] package pro
 
 *** math-shortcuts
 
-This custom minor mode allows for quick insertion of standard math sets ($\mathbb{R}, \mathbb{Q}, \mathbb{C}$, etc.) by simply pressing the corresponding capital letter while inside a math environment.
+This custom minor mode inserts standard number-set symbols (\(\mathbb{R}, \mathbb{Q}, \mathbb{C}, \mathbb{Z}, \mathbb{N}\)) when typing the corresponding capital letter inside a recognized math fragment. Typing the same letter immediately again replaces the expansion with the plain capital. Outside math, the mode invokes the ordinary key binding, preserving Org table editing and other insertion behavior. Use =M-x math-shortcuts-mode= to toggle the shortcut in the current buffer.
 
 #+begin_src emacs-lisp
 (require 'math-shortcuts)
