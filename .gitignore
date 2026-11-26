@@ -1,5 +1,6 @@
 /auto-save-list/
 /emacs-config.el
+/emacs-config.elc
 *~
 /ido.last
 /personal.*
@@ -20,9 +21,12 @@ straight/versions/*
 /.org-id-locations
 /custom.el
 /org-roam.db
+/org-roam.db-wal
+/org-roam.db-shm
+/org-roam.db-journal
 /eln-cache/
 /recentf.eld
 /bookmarks.eld
 /.cache/
-/session.10150133123b0d455a179183131213554300000031480074
+/session.*
 /Makefile.local

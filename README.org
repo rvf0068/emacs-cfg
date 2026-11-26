@@ -4,13 +4,13 @@
 
 Welcome! 🤓 This is my personal Emacs configuration, designed to be a comfortable and productive environment, especially for my work in *mathematics* and general programming.
 
-This configuration is built using a *literate programming* approach. 📖 Almost all of the setup lives inside the =emacs-config.org= file. This means every setting and piece of code is documented in plain English, making it easy to understand and maintain. The =init.el= file is kept minimal—its only job is to load this Org file.
+This configuration is built using a *literate programming* approach. 📖 Almost all of the setup lives inside the =emacs-config.org= file. This means every setting and piece of code is documented in plain English, making it easy to understand and maintain. The =early-init.el= file sets package activation and startup GC policy; =init.el= bootstraps straight.el, registers Org and Transient, loads private Customize settings, and tangles and loads the public Org configuration.
 
 A primary goal here is to create a first-class environment for academic writing and *mathematics*. 🧑‍🏫 This config includes a robust setup for *AUCTeX*, which provides a powerful, seamless experience for writing LaTeX documents. It's tuned for easily handling complex formulas, managing citations, and previewing your work. But it is also configured for producing mathematical texts using *org-mode*.
 
 Beyond LaTeX, the setup also includes *YASnippet* for powerful, time-saving code and text templates ⚡ (you can see custom ones in the =snippets/= directory). It also loads custom helper functions from the =lisp/= directory to add unique behaviors and streamline common tasks.
 
-To use this, simply clone the repository into your =~/.emacs.d= directory. The next time you start Emacs, it will automatically bootstrap, install the required packages, and tangle the =emacs-config.org= file. Enjoy! 😊
+For a new installation, clone this repository into an empty =~/.emacs.d= directory (or use a separate Emacs configuration directory). Back up an existing installation first; do not overwrite its private files. The next startup bootstraps straight.el, installs packages and tangles =emacs-config.org=. See the dependency diagnostics below and adapt =personal.example.org= for your machine.
 
 * Private and machine-specific settings
 
@@ -55,6 +55,14 @@ packages. =org-fragtog= is no longer needed with Org's native LaTeX preview
 mode; its lock entry has been removed. If you still have a private declaration
 for it, remove that declaration before freezing again. This does not delete
 any existing local package clone.
+
+A lock entry is a repository revision, not necessarily a public
+=use-package= declaration. Transitive dependencies, recipe repositories
+and packages used only in private configuration can appear here. In
+particular, retain the existing pins for =org-pomodoro=, =minions= and
+=modus-themes= even though the public configuration does not currently
+load them. Do not prune pins solely because a public CI run did not use
+or cache them. Review intentional upgrades separately from refactoring.
 
 * Elfeed for mathematical literature
 
@@ -542,7 +550,9 @@ The Dell (Emacs 32.0.50) paired benchmark measured median warm startup
 of 1.715 s with the original threshold and 1.020 s with 32 MiB. Median
 GC time fell from 0.723 s to 0.079 s; the explicit collection after
 startup remained about 0.04 s. These are isolated byte-compiled timings,
-not a guarantee of the same gain in a private installation.
+not a guarantee of the same gain in a private installation. On the same
+Dell, the reported ordinary =emacs-init-time= changed from 2.516778 s
+to 1.345072 s after adoption (single observations, not repeated medians).
 
 The early initialization now raises the GC threshold to 32 MiB if it
 was lower, and restores the original value near the end of
@@ -591,7 +601,9 @@ another copy of them.
 The graphical tests require graphical Emacs with SVG and dynamic module support,
 xvfb-run, xauth, GNU timeout, TeX Live (including lxfonts, AMS packages and
 mylatexformat), dvisvgm, and Python with Jupyter, IPykernel, NumPy, NetworkX
-and Matplotlib on PATH. PDF Tools and ZeroMQ need their native dependencies.
+and Matplotlib on PATH. PDF Tools and ZeroMQ need their native dependencies, including a working
+C toolchain and Autotools (autoconf, automake, libtool) for ZeroMQ's
+source-build fallback. The CI image supplies these.
 Set =RVF_EPDFINFO= to the path of a working epdfinfo if it is not on PATH.
 The unit suite also requires ripgrep (=rg=) to verify the Org notes search
 against real files. The suite downloads and builds packages in a temporary directory. The unit
@@ -681,5 +693,19 @@ The source cache is independent of the Docker image and opt-in through the
 CI runner's =RVF_TEST_REPOS_CACHE= directory. Normal local testing remains
 unchanged. Only a successful full suite populates the source cache. An
 offline Git fixture tests cache restoration, pin checking, and exclusion of
-generated files. Compare subsequent cache-hit runs before deciding whether
-compiled package caching is worth the additional complexity.
+generated files. The graphical runner explicitly finalizes straight transactions so later
+processes reuse builds within the same test run. There is no need to cache
+compiled packages across runs at present.
+
+* Maintenance checklist
+
+For a configuration change, consult =AGENTS.md=, keep the package pins
+unchanged unless an upgrade is intentional, and run =make test=. Before
+committing, check =git status= and never add private configuration,
+credentials, bibliography or note data, SQLite database files, package
+builds or generated sessions. Use =personal.example.org= for documented
+machine-specific settings. The public regression suite does not cover
+private GPTel authentication, private bibliography data, remote kernels,
+or every interactive operation. After a change to a relevant workflow,
+check that workflow in the usual Emacs installation as well.
+
