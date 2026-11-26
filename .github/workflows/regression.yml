@@ -20,7 +20,9 @@ jobs:
       - name: Install graphical Emacs and native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends emacs-gtk xvfb xauth libzmq3-dev build-essential pkg-config libpoppler-glib-dev libpng-dev zlib1g-dev elpa-pdf-tools-server texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science texlive-pictures lmodern cm-super-minimal dvisvgm latexmk biber aspell-en ripgrep
+          # Keep the validated TeX dependency closure: previews fail without
+          # some recommended packages even though kpsewhich checks pass.
+          sudo apt-get install -y emacs-gtk xvfb xauth libzmq3-dev build-essential pkg-config libpoppler-glib-dev libpng-dev zlib1g-dev elpa-pdf-tools-server texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science dvisvgm latexmk biber aspell-en ripgrep
           emacs --version
           kpsewhich lxfonts.sty
           kpsewhich mylatexformat.ltx
