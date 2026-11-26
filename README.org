@@ -429,3 +429,21 @@ and the uv-based setup above remain unchanged. To force a fresh image in
 CI, delete the corresponding cache in the repository's Actions cache
 settings, or edit the Dockerfile. Compare cache-hit runs with the earlier
 native-installation runs before judging performance.
+
+** Pinned Emacs package source cache
+
+CI additionally stores Git repository data for straight packages whose HEAD
+matches =straight/versions/default.el=. The source cache key includes the
+lockfile, literal package recipe declarations, bootstrap files, cache helper
+and calendar month. A changed recipe or pin starts a new cache. Each eligible
+repository is cloned into the fresh temporary test home and checked out at
+its exact recorded commit, with the original public upstream URL restored.
+Missing, unpinned, unsuitable or unusable entries are cloned normally by
+straight. Compiled packages and generated working-tree files are not cached.
+
+The source cache is independent of the Docker image and opt-in through the
+CI runner's =RVF_TEST_REPOS_CACHE= directory. Normal local testing remains
+unchanged. Only a successful full suite populates the source cache. An
+offline Git fixture tests cache restoration, pin checking, and exclusion of
+generated files. Compare subsequent cache-hit runs before deciding whether
+compiled package caching is worth the additional complexity.

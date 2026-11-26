@@ -49,7 +49,16 @@ if [[ -z "$pin" ]]; then
     echo "ERROR: straight.el pin not found in straight/versions/default.el" >&2
     exit 1
 fi
-git clone --quiet https://github.com/radian-software/straight.el.git "$RVF_TEST_DIR/straight/repos/straight.el"
+# Opt-in source cache, only used by CI; local runs still clone from scratch.
+# This runs before any package is loaded or built.
+if [[ -n "${RVF_TEST_REPOS_CACHE:-}" ]]; then
+    python "$root/tests/straight-source-cache.py" restore \
+        "$RVF_TEST_DIR/straight/repos" "$RVF_TEST_REPOS_CACHE" \
+        "$RVF_TEST_DIR/straight/versions/default.el"
+fi
+if [[ ! -d "$RVF_TEST_DIR/straight/repos/straight.el/.git" ]]; then
+    git clone --quiet https://github.com/radian-software/straight.el.git "$RVF_TEST_DIR/straight/repos/straight.el"
+fi
 git -C "$RVF_TEST_DIR/straight/repos/straight.el" checkout --quiet "$pin"
 if [[ "$mode" != unit ]]; then
     export RVF_TEST_JUPYTER="$(command -v jupyter)"
@@ -98,5 +107,11 @@ fi
 if [[ "$mode" == all || "$mode" == unit ]]; then
     echo "Running isolated ERT unit tests..."
     timeout --kill-after=20s 20m "$emacs" -Q --batch --load tests/run-unit.el || status=1
+fi
+# Publish source data only after all full regression tests have passed.
+if [[ "$status" == 0 && "$mode" == all && -n "${RVF_TEST_REPOS_CACHE:-}" ]]; then
+    python "$root/tests/straight-source-cache.py" save \
+        "$RVF_TEST_DIR/straight/repos" "$RVF_TEST_REPOS_CACHE" \
+        "$RVF_TEST_DIR/straight/versions/default.el"
 fi
 exit "$status"

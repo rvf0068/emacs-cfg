@@ -43,12 +43,40 @@ jobs:
             du -h "$archive"
           fi
           docker image inspect emacs-regression:ci --format 'Image {{.Id}}, bytes {{.Size}}'
+      - name: Fingerprint package recipes
+        id: package-recipes
+        shell: bash
+        run: |
+          digest=$(docker run --rm \
+            --mount "type=bind,source=$GITHUB_WORKSPACE,target=/workspace,readonly" \
+            emacs-regression:ci emacs -Q --batch \
+            --load tests/test-package-recipes.el \
+            --eval '(prin1 (mapcar (lambda (form) (list (cadr form) (cadr (memq :straight (cddr form))))) (rvf/test-package-declarations "emacs-config.org")))' \
+            | sha256sum | cut -d ' ' -f 1)
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+      - name: Restore pinned Emacs source repositories
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/straight-source-cache
+          key: straight-sources-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.image.outputs.month }}-${{ steps.package-recipes.outputs.digest }}-${{ hashFiles('straight/versions/default.el', 'init.el', 'early-init.el', 'tests/test-package-recipes.el', 'tests/straight-source-cache.py') }}
+      - name: Prepare source cache directory
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/straight-source-cache"
+          # Cache extraction runs as the host user; Git must see repositories
+          # owned by the container user before accepting local clones.
+          docker run --rm --user root \
+            --mount "type=bind,source=$RUNNER_TEMP/straight-source-cache,target=/ci-source-cache" \
+            emacs-regression:ci chown -R ci:ci /ci-source-cache
       - name: Validate dependency diagnostics and run full regression
         shell: bash
         run: |
           time docker run --rm --init \
             --mount "type=bind,source=$GITHUB_WORKSPACE,target=/workspace,readonly" \
+            --mount "type=bind,source=$RUNNER_TEMP/straight-source-cache,target=/ci-source-cache" \
+            --env RVF_TEST_REPOS_CACHE=/ci-source-cache \
             emacs-regression:ci bash -euo pipefail -c '
+              python -B tests/test-straight-source-cache.py
               make doctor EMACS=emacs UV_PROJECT=
               log=$(mktemp)
               if make doctor-unit EMACS=/nonexistent/emacs UV_PROJECT= > "$log" 2>&1; then
