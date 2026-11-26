@@ -75,6 +75,160 @@ kernelspecs and already running Jupyter/Eglot sessions are not restarted
 or silently redirected by this helper; choose the intended kernel and
 restart an existing language server when changing environments.
 
+** Using pycliques-project from Jupyter blocks
+
+There are several ways to use the monorepo from Emacs. Choose whichever
+fits your workflow; none of these alternatives is required as a global
+default.
+
+*** Launch Emacs in the project's uv environment
+
+The original approach makes the project's Python and Jupyter executables
+available to the entire Emacs process:
+
+#+begin_src sh
+cd ~/Python/pycliques-project
+uv run emacs
+#+end_src
+
+Alternatively, launch from any directory without changing the shell's
+working directory first:
+
+#+begin_src sh
+uv run --project ~/Python/pycliques-project emacs
+#+end_src
+
+These commands assume that Emacs is on PATH and that the project's
+environment contains Jupyter. This approach is convenient when most
+of your work in an Emacs session uses the same Python environment.
+It also works for Org research notes stored outside the monorepo.
+
+*** Register a dedicated Jupyter kernel
+
+To launch Emacs normally and select the monorepo's interpreter from
+individual Org documents, register a named kernel:
+
+#+begin_src sh
+cd ~/Python/pycliques-project
+uv run python -m ipykernel install --user \
+    --name pycliques \
+    --display-name "Python (pycliques-project)"
+#+end_src
+
+Run this once per computer, assuming the virtual environment is kept
+at the same path. Register it again if the environment is moved.
+The kernel specification refers to the project's Python interpreter
+(normally =~/Python/pycliques-project/.venv/bin/python=), not the
+Python interpreter that was active when Emacs started.
+
+Select it in a single Org block:
+
+#+begin_example
+,#+begin_src jupyter-python :kernel pycliques :session research
+import pycliques
+import pycombtop
+import pyg6data
+import pyhomrep
+,#+end_src
+#+end_example
+
+Or choose it for a whole document:
+
+#+begin_example
+,#+PROPERTY: header-args:jupyter-python :kernel pycliques :session research
+#+end_example
+
+After editing the property, use =C-c C-c= on that line to refresh
+Org's settings, or reopen the document. Individual blocks can then
+omit the kernel header:
+
+#+begin_example
+,#+begin_src jupyter-python
+import networkx as nx
+import pycliques
+
+G = nx.octahedral_graph()
+G.number_of_nodes()
+,#+end_src
+#+end_example
+
+The expected result is 6. This works even when the Org file is outside
+the monorepo. To check the interpreter used by an actual kernel:
+
+#+begin_example
+,#+begin_src jupyter-python :kernel pycliques :session research
+import sys
+sys.executable
+,#+end_src
+#+end_example
+
+Use different session names for independent computations, and start
+a new session if you need to change the interpreter of an existing
+session.
+
+*** Make Jupyter available when Emacs starts normally
+
+The current public configuration enables emacs-jupyter only if
+=(executable-find "jupyter")= succeeds during initialization.
+After launching Emacs normally, evaluate this expression with =M-:=:
+
+#+begin_src emacs-lisp
+(executable-find "jupyter")
+#+end_src
+
+If the result is nil, arrange for a Jupyter installation to be
+available on Emacs's PATH. For example, if Jupyter is already installed
+in the monorepo's environment, the following optional private setting
+makes that executable discoverable before the public Jupyter
+declaration is evaluated:
+
+#+begin_src emacs-lisp
+(let ((bin (expand-file-name "~/Python/pycliques-project/.venv/bin")))
+  (when (file-executable-p (expand-file-name "jupyter" bin))
+    (add-to-list 'exec-path bin)
+    (setenv "PATH" (concat bin path-separator (getenv "PATH")))))
+#+end_src
+
+Put this in =personal.org= and restart Emacs. It adds the project's
+executables to the process-wide search path; skip it if Jupyter is
+already available from a separate installation. A named kernelspec
+still controls which interpreter actually executes a block.
+
+*** Optional default kernel
+
+If most Jupyter Python blocks use the monorepo, the named kernel can
+become the default without putting a kernel header in every document.
+For example, in =personal.org=:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'ob-jupyter
+  (defvar org-babel-default-header-args:jupyter-python nil)
+  (setf (alist-get :kernel org-babel-default-header-args:jupyter-python)
+        "pycliques"))
+#+end_src
+
+Explicit kernel headers in documents and blocks take precedence.
+This is optional: if you often use several environments, leave the
+default unchanged and choose kernels explicitly. Restart Emacs after
+changing this setting.
+
+*** Comparison
+
+| Method                              | Special launch | Scope                              |
+|-------------------------------------+----------------+------------------------------------|
+| =cd ...; uv run emacs=              | Yes            | Whole Emacs process                |
+| =uv run --project ... emacs=        | Yes            | Whole Emacs process, any directory |
+| Named kernelspec                    | No             | Individual Jupyter blocks/files    |
+| Named kernelspec as default         | No             | Default Jupyter Python blocks      |
+| Automatic =uv-env.el= discovery     | No             | Local project buffers              |
+
+The automatic project environment helper is complementary: it selects
+ordinary Python and subprocess executables for local project buffers,
+but it does not replace an explicitly selected Jupyter kernel or
+redirect an already running session. For Org files outside a workspace,
+a named kernel or the original uv launch approach is still needed to
+use the monorepo. Try both approaches before choosing a personal default.
+
 * Regression tests
 
 The test suite uses a temporary home directory, copies the public configuration
