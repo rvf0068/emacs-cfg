@@ -76,6 +76,7 @@ jobs:
             --mount "type=bind,source=$RUNNER_TEMP/straight-source-cache,target=/ci-source-cache" \
             --env RVF_TEST_REPOS_CACHE=/ci-source-cache \
             emacs-regression:ci bash -euo pipefail -c '
+              python -B tests/test-straight-source-cache.py
               make doctor EMACS=emacs UV_PROJECT=
               log=$(mktemp)
               if make doctor-unit EMACS=/nonexistent/emacs UV_PROJECT= > "$log" 2>&1; then
