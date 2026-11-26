@@ -4,6 +4,9 @@
 (require 'uv-env)
 (require 'python)
 (require 'ob-python)
+;; Initialize TRAMP before tests intercept filesystem and executable lookup.
+;; Its autoload initialization legitimately probes ssh/scp executables.
+(require 'tramp)
 
 (defun rvf/test-uv-manifest (dir)
   (make-directory dir t)
@@ -98,6 +101,7 @@
       (delete-directory root t))))
 
 (ert-deftest rvf/uv-remote-paths-are-not-probed ()
+  (should (file-remote-p "/ssh:unreachable:/project/"))
   (cl-letf (((symbol-function 'file-regular-p)
              (lambda (&rest _) (ert-fail "Unexpected remote file probe"))))
     (should-not (rvf/uv-find-environment "/ssh:unreachable:/project/"))))
@@ -189,8 +193,15 @@
 (ert-deftest rvf/python-eglot-remote-contact-does-not-probe-local-server ()
   (with-temp-buffer
     (setq default-directory "/ssh:unreachable:/project/")
-    (cl-letf (((symbol-function 'executable-find)
-               (lambda (&rest _) (ert-fail "Unexpected executable lookup"))))
-      (should (equal (rvf/python-eglot-contact) '("pylsp"))))))
+    ;; Resolve the actual TRAMP handler before installing the mock, without
+    ;; opening a remote connection. Do not mock unrelated TRAMP internals.
+    (should (file-remote-p default-directory))
+    (let ((original (symbol-function 'executable-find)))
+      (cl-letf (((symbol-function 'executable-find)
+                 (lambda (command &rest args)
+                   (if (equal command "pylsp")
+                       (ert-fail "Unexpected local pylsp lookup")
+                     (apply original command args)))))
+        (should (equal (rvf/python-eglot-contact) '("pylsp")))))))
 
 ;;; uv-env-tests.el ends here
