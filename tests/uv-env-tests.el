@@ -1,0 +1,122 @@
+;;; uv-env-tests.el --- Python workspace environment tests -*- lexical-binding: t; -*-
+
+(require 'ert)
+(require 'uv-env)
+(require 'python)
+(require 'ob-python)
+
+(defun rvf/test-uv-manifest (dir)
+  (make-directory dir t)
+  (with-temp-file (expand-file-name "pyproject.toml" dir)
+    (insert "[project]\nname = \"test\"\nversion = \"0.1.0\"\n")))
+
+(defun rvf/test-uv-fake-env (dir &optional not-executable)
+  "Create a filesystem fixture, not a real virtual environment."
+  (let ((python (expand-file-name ".venv/bin/python" dir)))
+    (make-directory (file-name-directory python) t)
+    (with-temp-file python (insert "#!/bin/sh\nexit 0\n"))
+    (set-file-modes python (if not-executable #o644 #o755)))
+  (expand-file-name ".venv" dir))
+
+(ert-deftest rvf/uv-workspace-and-nearest-environment ()
+  (let* ((root (make-temp-file "rvf-uv-" t))
+         (package (expand-file-name "packages/one/" root))
+         (source (expand-file-name "src/one/" package)))
+    (unwind-protect
+        (progn
+          (rvf/test-uv-manifest root)
+          (rvf/test-uv-manifest package)
+          (make-directory source t)
+          (make-directory (expand-file-name ".git" root))
+          (let ((shared (rvf/test-uv-fake-env root)))
+            (should (equal (rvf/uv-find-environment source) shared))
+            (rvf/test-uv-fake-env package t)
+            (should (equal (rvf/uv-find-environment source) shared))
+            ;; Create the executable before searching.  Function arguments
+            ;; are evaluated left-to-right, so creating it inside the
+            ;; second argument of equal would search the old fixture.
+            (let ((local-env (rvf/test-uv-fake-env package)))
+              (should (file-executable-p (expand-file-name "bin/python" local-env)))
+              (should (equal (rvf/uv-find-environment source) local-env)))
+            (delete-directory (expand-file-name ".venv" package) t)
+            ;; A nested checkout must not accidentally inherit the parent env.
+            (with-temp-file (expand-file-name ".git" package)
+              (insert "gitdir: elsewhere\n"))
+            (should-not (rvf/uv-find-environment source))))
+      (delete-directory root t))))
+
+(ert-deftest rvf/uv-buffer-local-activation-and-restoration ()
+  (let* ((root (make-temp-file "rvf-uv-" t))
+         (other (expand-file-name "other/" root))
+         (project (expand-file-name "project/" root))
+         (outside (expand-file-name "outside/" root))
+         (global-exec (default-value 'exec-path))
+         (global-env (default-value 'process-environment))
+         (global-python (default-value 'python-shell-interpreter)))
+    (unwind-protect
+        (progn
+          (dolist (dir (list project other))
+            (rvf/test-uv-manifest dir)
+            (make-directory (expand-file-name ".git" dir))
+            (rvf/test-uv-fake-env dir))
+          (make-directory outside)
+          (with-temp-buffer
+            (setq default-directory project)
+            (setq-local python-shell-interpreter "private-python")
+            (let* ((original-path (getenv "PATH"))
+                   (venv (expand-file-name ".venv" project))
+                   (bin (expand-file-name "bin" venv)))
+              (should (equal (my/find-uv-venv) venv))
+              (should (equal python-shell-interpreter (expand-file-name "python" bin)))
+              (should (equal org-babel-python-command python-shell-interpreter))
+              (should (equal python-shell-virtualenv-root venv))
+              (should (equal (getenv "VIRTUAL_ENV") venv))
+              (should (equal (car exec-path) bin))
+              (should (equal (executable-find "python") python-shell-interpreter))
+              (should (equal (car (split-string (getenv "PATH") path-separator)) bin))
+              (my/find-uv-venv)
+              (should (= 1 (cl-count bin exec-path :test #'equal)))
+              (should (= 1 (cl-count bin (split-string (getenv "PATH") path-separator)
+                                     :test #'equal)))
+              (with-temp-buffer
+                (setq default-directory other)
+                (should (equal exec-path global-exec))
+                (should (equal process-environment global-env))
+                (should (equal (my/find-uv-venv) (expand-file-name ".venv" other)))
+                (should-not (member bin exec-path)))
+              (should (equal (getenv "VIRTUAL_ENV") venv))
+              (setq default-directory outside)
+              (should-not (my/find-uv-venv))
+              (should (equal python-shell-interpreter "private-python"))
+              (should (local-variable-p 'python-shell-interpreter))
+              (should-not (local-variable-p 'exec-path))
+              (should-not (local-variable-p 'process-environment))
+              (should (equal (getenv "PATH") original-path))))
+          (should (equal (default-value 'exec-path) global-exec))
+          (should (equal (default-value 'process-environment) global-env))
+          (should (equal (default-value 'python-shell-interpreter) global-python)))
+      (delete-directory root t))))
+
+(ert-deftest rvf/uv-remote-paths-are-not-probed ()
+  (cl-letf (((symbol-function 'file-regular-p)
+             (lambda (&rest _) (ert-fail "Unexpected remote file probe"))))
+    (should-not (rvf/uv-find-environment "/ssh:unreachable:/project/"))))
+
+(ert-deftest rvf/uv-babel-environment-crosses-temporary-buffer ()
+  ;; Model only the buffer switch. The graphical workflow exercises the
+  ;; actual Org execution and an actual Python subprocess.
+  (with-temp-buffer
+    (setq-local rvf/uv-environment "/fixture/.venv"
+                process-environment (copy-sequence process-environment)
+                exec-path (cons "/fixture/.venv/bin" exec-path))
+    (setenv "VIRTUAL_ENV" rvf/uv-environment)
+    (rvf/uv--babel-python-environment
+     (lambda ()
+       (with-temp-buffer
+         (rvf/uv--babel-subprocess-environment
+          (lambda ()
+            (should (equal (getenv "VIRTUAL_ENV") "/fixture/.venv"))
+            (should (equal (car exec-path) "/fixture/.venv/bin")))))))
+    (should-not rvf/uv--babel-subprocess-settings)))
+
+;;; uv-env-tests.el ends here
