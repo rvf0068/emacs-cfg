@@ -505,3 +505,51 @@ its processing-info plist."
               (should-not (string-match-p "org-babel-lob-ingest" body))
               (should-not (string-match-p "rvf.bib" body)))))
       (delete-directory dir t))))
+
+(ert-deftest rvf/workflow-pdf-tools-and-noter-document ()
+  ;; Exercise the real native server and Org Noter's document resolution.
+  ;; No internet access or interactive reading session is necessary.
+  (require 'pdf-tools)
+  (require 'org-noter)
+  (let* ((dir (make-temp-file "rvf-pdf-noter-" t))
+         (default-directory (file-name-as-directory dir))
+         (tex (expand-file-name "paper.tex" dir))
+         (pdf (expand-file-name "paper.pdf" dir))
+         (note (expand-file-name "paper.org" dir))
+         (org-noter-notes-search-path (list dir))
+         pdf-buffer note-buffer)
+    (unwind-protect
+        (progn
+          (with-temp-file tex
+            (insert "\\documentclass{article}\n\\begin{document}\n"
+                    "First page.\\newpage Second page.\n\\end{document}\n"))
+          (with-temp-buffer
+            (should (zerop (call-process "pdflatex" nil t nil
+                                        "-interaction=nonstopmode" "-halt-on-error"
+                                        "-output-directory" dir tex))))
+          (should (file-regular-p pdf))
+          (setq pdf-buffer (find-file-noselect pdf))
+          (with-current-buffer pdf-buffer
+            (should (eq major-mode 'pdf-view-mode))
+            (should (= 2 (pdf-info-number-of-pages)))
+            (should (string-match-p "Second page"
+                                    (pdf-info-gettext 2 '(0 0 1 1))))
+            (let ((image (pdf-info-renderpage 2 200)))
+              (should (stringp image))
+              (should (> (length image) 100))))
+          (with-temp-file note
+            (insert "* Reading notes\n:PROPERTIES:\n:NOTER_DOCUMENT: paper.pdf\n:END:\n"
+                    "** Page two\n:PROPERTIES:\n:NOTER_PAGE: 2\n:END:\n"))
+          (setq note-buffer (find-file-noselect note))
+          (with-current-buffer note-buffer
+            (goto-char (point-min))
+            (should (equal (expand-file-name
+                            (org-noter--get-or-read-document-property t))
+                           pdf))
+            (should (org-noter--check-if-document-is-annotated-on-file pdf note)))
+          (should (eq (lookup-key global-map (kbd "<f5> n")) 'org-noter)))
+      (dolist (buffer (list note-buffer pdf-buffer))
+        (when (buffer-live-p buffer)
+          (with-current-buffer buffer (set-buffer-modified-p nil))
+          (kill-buffer buffer)))
+      (delete-directory dir t))))
