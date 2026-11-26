@@ -113,6 +113,46 @@ Do not install packages, run uv, or change an existing Jupyter session."
   (advice-add 'org-babel--shell-command-on-region :around
               #'rvf/uv--babel-subprocess-environment))
 
+(defvar my-python-eglot-auto-start t
+  "Whether to start Eglot automatically in visited Python files.")
+
+(defvar my-python-eglot-allow-global-server nil
+  "Whether to allow a PATH pylsp when the selected .venv lacks one.
+A global server can analyze a different Python environment.")
+
+(declare-function eglot-ensure "eglot")
+
+(defun rvf/python-eglot-command ()
+  "Resolve pylsp for the current buffer, without installing anything.
+Prefer the active project environment.  Outside a project, use PATH.
+Leave remote executable resolution to Eglot."
+  (cond
+   ((file-remote-p default-directory) "pylsp")
+   (rvf/uv-environment
+    (let ((server (expand-file-name "bin/pylsp" rvf/uv-environment)))
+      (if (and (file-regular-p server) (file-executable-p server))
+          server
+        (when my-python-eglot-allow-global-server
+          (executable-find "pylsp")))))
+   (t (executable-find "pylsp"))))
+
+(defun rvf/python-eglot-contact (&rest _ignored)
+  "Return the pylsp contact for both Python major modes.
+Eglot may pass interactive/project arguments depending on its version."
+  (let ((command (rvf/python-eglot-command)))
+    (unless command
+      (user-error "No suitable pylsp; see rvf/describe-python-environment"))
+    (list command)))
+
+(defun rvf/python-mode-setup ()
+  "Activate the Python environment before considering Eglot startup.
+Do not start a server for temporary buffers or when pylsp is missing.
+An existing Eglot session is not restarted by this function."
+  (my/find-uv-venv)
+  (when (and my-python-eglot-auto-start buffer-file-name
+             (rvf/python-eglot-command))
+    (eglot-ensure)))
+
 (defun rvf/describe-python-environment ()
   "Display Python executable and environment resolution in this buffer.
 The Jupyter executable is not necessarily the interpreter of a kernel:
@@ -120,13 +160,15 @@ an explicit kernelspec or an existing session may select another Python."
   (interactive)
   (let ((report
          (format
-          "Directory: %s\nDetected .venv: %s\nActivated .venv: %s\nPython shell: %s\nBabel Python: %s\nVIRTUAL_ENV: %s\npython on exec-path: %s\npylsp on exec-path: %s\njupyter on exec-path: %s\nConfigured Jupyter command: %s\nAvailable configured Jupyter: %s\n\nJupyter kernels are selected by kernelspec/session, not PATH alone.\n"
+          "Directory: %s\nDetected .venv: %s\nActivated .venv: %s\nPython shell: %s\nBabel Python: %s\nVIRTUAL_ENV: %s\npython on exec-path: %s\npylsp on exec-path: %s\nSelected Eglot pylsp: %s\nEglot auto-start: %s\njupyter on exec-path: %s\nConfigured Jupyter command: %s\nAvailable configured Jupyter: %s\n\nJupyter kernels are selected by kernelspec/session, not PATH alone.\n"
           default-directory (or (rvf/uv-find-environment) "none")
           (or rvf/uv-environment "none")
           (and (boundp 'python-shell-interpreter) python-shell-interpreter)
           (and (boundp 'org-babel-python-command) org-babel-python-command)
           (getenv "VIRTUAL_ENV") (executable-find "python")
-          (executable-find "pylsp") (executable-find "jupyter")
+          (executable-find "pylsp")
+          (or (rvf/python-eglot-command) "none")
+          my-python-eglot-auto-start (executable-find "jupyter")
           (if (fboundp 'rvf/jupyter-command-name) (rvf/jupyter-command-name) "not configured")
           (and (fboundp 'rvf/jupyter-available-p) (rvf/jupyter-available-p)))))
     (with-help-window "*Python environment*"

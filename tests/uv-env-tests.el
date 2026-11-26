@@ -4,6 +4,9 @@
 (require 'uv-env)
 (require 'python)
 (require 'ob-python)
+;; Initialize TRAMP before tests intercept filesystem and executable lookup.
+;; Its autoload initialization legitimately probes ssh/scp executables.
+(require 'tramp)
 
 (defun rvf/test-uv-manifest (dir)
   (make-directory dir t)
@@ -98,6 +101,7 @@
       (delete-directory root t))))
 
 (ert-deftest rvf/uv-remote-paths-are-not-probed ()
+  (should (file-remote-p "/ssh:unreachable:/project/"))
   (cl-letf (((symbol-function 'file-regular-p)
              (lambda (&rest _) (ert-fail "Unexpected remote file probe"))))
     (should-not (rvf/uv-find-environment "/ssh:unreachable:/project/"))))
@@ -118,5 +122,86 @@
             (should (equal (getenv "VIRTUAL_ENV") "/fixture/.venv"))
             (should (equal (car exec-path) "/fixture/.venv/bin")))))))
     (should-not rvf/uv--babel-subprocess-settings)))
+
+(ert-deftest rvf/python-eglot-project-server-and-fallback ()
+  (let* ((root (make-temp-file "rvf-eglot-" t))
+         (project (expand-file-name "project/" root))
+         (global (expand-file-name "global/" root))
+         (outside (expand-file-name "outside/" root))
+         (my-python-eglot-allow-global-server nil))
+    (unwind-protect
+        (progn
+          (rvf/test-uv-manifest project)
+          (make-directory (expand-file-name ".git" project))
+          (make-directory global)
+          (make-directory outside)
+          (let* ((venv (rvf/test-uv-fake-env project))
+                 (local-server (expand-file-name "bin/pylsp" venv))
+                 (global-server (expand-file-name "pylsp" global)))
+            (with-temp-file global-server (insert "#!/bin/sh\nexit 0\n"))
+            (set-file-modes global-server #o755)
+            (with-temp-buffer
+              (setq default-directory project)
+              (setq-local exec-path (list global))
+              (my/find-uv-venv)
+              (should-not (rvf/python-eglot-command))
+              (should-error (rvf/python-eglot-contact) :type 'user-error)
+              (let ((my-python-eglot-allow-global-server t))
+                (should (equal (rvf/python-eglot-command) global-server)))
+              (with-temp-file local-server (insert "#!/bin/sh\nexit 0\n"))
+              (set-file-modes local-server #o755)
+              (should (equal (rvf/python-eglot-contact) (list local-server)))
+              (setq default-directory outside)
+              (my/find-uv-venv)
+              (should (equal (rvf/python-eglot-command) global-server)))))
+      (delete-directory root t))))
+
+(ert-deftest rvf/python-eglot-starts-only-after-environment-activation ()
+  (let* ((root (make-temp-file "rvf-eglot-hook-" t))
+         (my-python-eglot-auto-start t)
+         (my-python-eglot-allow-global-server nil)
+         (calls 0))
+    (unwind-protect
+        (progn
+          (rvf/test-uv-manifest root)
+          (let* ((venv (rvf/test-uv-fake-env root))
+                 (server (expand-file-name "bin/pylsp" venv)))
+            (with-temp-buffer
+              (setq default-directory (file-name-as-directory root)
+                    buffer-file-name (expand-file-name "test.py" root))
+              (cl-letf (((symbol-function 'eglot-ensure)
+                         (lambda ()
+                           (should (equal rvf/uv-environment venv))
+                           (should (equal (getenv "VIRTUAL_ENV") venv))
+                           (should (equal (rvf/python-eglot-command) server))
+                           (cl-incf calls))))
+                (rvf/python-mode-setup)
+                (should (= calls 0))
+                (with-temp-file server (insert "#!/bin/sh\nexit 0\n"))
+                (set-file-modes server #o755)
+                (rvf/python-mode-setup)
+                (should (= calls 1))
+                (let ((my-python-eglot-auto-start nil))
+                  (rvf/python-mode-setup)
+                  (should (equal rvf/uv-environment venv))
+                  (should (= calls 1)))
+                (setq buffer-file-name nil)
+                (rvf/python-mode-setup)
+                (should (= calls 1))))))
+      (delete-directory root t))))
+
+(ert-deftest rvf/python-eglot-remote-contact-does-not-probe-local-server ()
+  (with-temp-buffer
+    (setq default-directory "/ssh:unreachable:/project/")
+    ;; Resolve the actual TRAMP handler before installing the mock, without
+    ;; opening a remote connection. Do not mock unrelated TRAMP internals.
+    (should (file-remote-p default-directory))
+    (let ((original (symbol-function 'executable-find)))
+      (cl-letf (((symbol-function 'executable-find)
+                 (lambda (command &rest args)
+                   (if (equal command "pylsp")
+                       (ert-fail "Unexpected local pylsp lookup")
+                     (apply original command args)))))
+        (should (equal (rvf/python-eglot-contact) '("pylsp")))))))
 
 ;;; uv-env-tests.el ends here

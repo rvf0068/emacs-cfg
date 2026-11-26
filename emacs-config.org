@@ -923,8 +923,8 @@ The helper searches upward for a usable project =.venv=, including shared enviro
 
 #+begin_src emacs-lisp
 (require 'uv-env)
-(add-hook 'python-mode-hook #'my/find-uv-venv)
-(add-hook 'python-ts-mode-hook #'my/find-uv-venv)
+(add-hook 'python-mode-hook #'rvf/python-mode-setup)
+(add-hook 'python-ts-mode-hook #'rvf/python-mode-setup)
 (add-hook 'org-mode-hook #'my/find-uv-venv)
 #+end_src
 
@@ -975,20 +975,29 @@ See the README for both uv launch and named kernelspec workflows.
 
 *** eglot
 
-=eglot= is the built-in Emacs LSP client. It is configured to auto-start for Python mode using =pylsp=.
+=eglot= is the built-in Emacs LSP client. Both Python major modes use
+=pylsp=. The Python mode setup above activates the project environment
+before requesting Eglot startup. A project with an active =.venv= uses
+its own =bin/pylsp=; if it is missing, automatic startup is skipped by
+default rather than silently analyzing a different environment.
+Outside such a project, the server on PATH is used. Remote server
+resolution remains Eglot's responsibility.
 
 #+begin_src emacs-lisp
 (use-package eglot
   :straight (:type built-in)
-  :hook
-  (python-mode . eglot-ensure)
-  (python-ts-mode . eglot-ensure)
+  :commands (eglot eglot-ensure)
   :config
-  (add-to-list 'eglot-server-programs '(python-mode . ("pylsp")))
+  (add-to-list 'eglot-server-programs
+               '((python-mode python-ts-mode) . rvf/python-eglot-contact))
 
-  ;; Tell default linters to allow 88 characters
+  ;; Tell default linters to allow 88 characters.
   (setq-default eglot-workspace-configuration
-		'(:pylsp (:plugins (
-				    :pycodestyle (:maxLineLength 88)
-						 :flake8 (:maxLineLength 88))))))
+                '(:pylsp (:plugins (:pycodestyle (:maxLineLength 88)
+                                   :flake8 (:maxLineLength 88))))))
 #+end_src
+
+Set =my-python-eglot-auto-start= to nil in =personal.org= to disable
+automatic startup, or =my-python-eglot-allow-global-server= to t to
+allow the PATH fallback inside an activated environment. See the README
+for installation and restarting an existing server.
