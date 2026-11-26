@@ -28,5 +28,8 @@ Lisp file are ignored by Git. Do not put actual credentials here.
 ;; (setq my-literature-note-setupfile "options.org") ; only if readable
 ;; (setq my-literature-note-setupfile nil) ; disable setup directive
 ;; (setq my-literature-note-extra "* References\n#+print_bibliography:\n")
+;; Optional: restore PDF Tools' installation prompt during startup.
+;; (setq my-pdf-tools-offer-install t)
+;; (setq pdf-info-epdfinfo-program "/usr/bin/epdfinfo")
 ;; Put your existing private package and GPTel configuration here.
 #+end_src
