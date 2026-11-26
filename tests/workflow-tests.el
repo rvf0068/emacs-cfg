@@ -568,6 +568,8 @@ its processing-info plist."
           (elfeed-show-mode)
           (let ((elfeed-show-refresh-function
                  (lambda ()
+                   ;; Elfeed invokes its refresh function interactively.
+                   (interactive)
                    (let ((inhibit-read-only t))
                      (erase-buffer)
                      (insert "Synthetic abstract: \\(x_{37}^{2}+y_{41}^{3}\\).")))))
