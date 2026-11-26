@@ -151,21 +151,39 @@ invoke the two hooks which normally surround each editing command."
 
 (ert-deftest rvf/workflow-latex-edit-regenerates-preview ()
   (let* ((file (make-temp-file "rvf-preview-edit-" nil ".org"))
-         (buffer (find-file-noselect file)))
+         ;; Different formulas in the two startup scenarios ensure both
+         ;; exercise cold rendering, not the previous process's cache.
+         (number (if (equal (getenv "RVF_TEST_PERSONAL") "absent") "2718" "3141"))
+         (buffer nil)
+         (finished nil)
+         (org-latex-preview-process-finish-functions
+          (cons (lambda (status _process-buffer info)
+                  (when (eq (plist-get info :org-buffer) buffer)
+                    (push status finished)))
+                org-latex-preview-process-finish-functions)))
     (unwind-protect
         (save-window-excursion
+          ;; Write the initial fixture before enabling Org mode.
+          ;; Inserting a complete formula into a live Org buffer already
+          ;; queues a preview. An additional explicit request would race
+          ;; with it, potentially overwriting the regenerated image.
+          (with-temp-file file
+            (insert "Before\n\nInline \\(x+" number "\\) after.\n"))
+          (setq buffer (find-file-noselect file))
           (switch-to-buffer buffer)
           (should org-latex-preview-mode)
-          ;; Inline editing, not live side-by-side block rendering.
-          (insert "Before\n\nInline \\(x+1\\) after.\n")
-          (save-buffer)
           (goto-char (point-min))
           (org-latex-preview '(16))
           (should (rvf/test-wait-for
-                   (lambda () (= 1 (length (rvf/test-preview-images)))) 120))
+                   (lambda ()
+                     (and finished
+                          (= 1 (length (rvf/test-preview-images)))))
+                   120))
+          (should (equal finished '(0)))
           (let* ((ov (rvf/test-preview-overlay))
                  (original (rvf/test-image-digest (overlay-get ov 'display))))
             (should original)
+            (should-not (overlay-get ov 'help-echo))
             ;; Enter the rendered fragment through the native cursor hooks.
             (rvf/test-preview-command
              (lambda () (goto-char (+ 3 (overlay-start ov)))))
@@ -179,19 +197,29 @@ invoke the two hooks which normally surround each editing command."
                (delete-char 1)
                (insert "\\mathbb{Q}")))
             (should (eq (overlay-get ov 'org-preview-state) 'modified))
+            (should (string-search (concat "\\(\\mathbb{Q}+" number "\\)")
+                                   (buffer-string)))
             (rvf/test-preview-command
              (lambda () (goto-char (point-max))))
-            (should
-             (rvf/test-wait-for
-              (lambda ()
-                (let* ((current (rvf/test-preview-overlay))
-                       (image (and current (overlay-get current 'display)))
-                       (digest (rvf/test-image-digest image)))
-                  (and digest (not (equal digest original))
-                       (not (overlay-get current 'org-view-text))
-                       (not (overlay-get current 'help-echo)))))
-              120))
-            (should (string-search "\\(\\mathbb{Q}+1\\)" (buffer-string)))))
+            (should-not (overlay-get ov 'org-view-text))
+            (let ((regenerated
+                   (rvf/test-wait-for
+                    (lambda ()
+                      (let* ((current (rvf/test-preview-overlay))
+                             (image (and current (overlay-get current 'display)))
+                             (digest (rvf/test-image-digest image)))
+                        (and (= (length finished) 2)
+                             digest (not (equal digest original))
+                             (not (overlay-get current 'org-view-text))
+                             (not (overlay-get current 'help-echo)))))
+                    120)))
+              (unless regenerated
+                (let ((current (rvf/test-preview-overlay)))
+                  (message "Preview regeneration diagnostic: finished=%S original=%S properties=%S"
+                           finished original
+                           (and current (overlay-properties current)))))
+              (should regenerated)
+              (should (equal finished '(0 0))))))
       (when (buffer-live-p buffer)
         (with-current-buffer buffer (set-buffer-modified-p nil))
         (kill-buffer buffer))
