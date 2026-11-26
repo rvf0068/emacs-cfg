@@ -16,6 +16,9 @@ Inline: \(\mathbb{Q}\), \(\varnothing\), \(\Delta(G)\).
 
 Use C-c C-x C-l to generate previews; move into and out of a fragment,
 edit it, and verify that its preview reappears with the changed formula.
+For example, change the first inline formula from =\mathbb{Q}= to
+=\mathbb{R}=; its rendered image should change when you leave the fragment,
+without invoking the preview command again.
 
 * Jupyter
 

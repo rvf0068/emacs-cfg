@@ -106,6 +106,106 @@
       (when-let* ((buffer (get-file-buffer file))) (kill-buffer buffer))
       (delete-file file))))
 
+
+(defun rvf/test-preview-overlay ()
+  "Return the single preview overlay in the current fixture."
+  (cl-find-if (lambda (ov)
+                (eq (overlay-get ov 'org-overlay-type) 'org-latex-overlay))
+              (overlays-in (point-min) (point-max))))
+
+(defun rvf/test-preview-command (action)
+  "Run ACTION with native preview mode's registered command hooks.
+ERT runs Lisp without the interactive command loop, so explicitly
+invoke the two hooks which normally surround each editing command."
+  (should (memq #'org-latex-preview-mode--handle-pre-cursor pre-command-hook))
+  (should (memq #'org-latex-preview-mode--handle-post-cursor post-command-hook))
+  (org-latex-preview-mode--handle-pre-cursor)
+  (funcall action)
+  (org-latex-preview-mode--handle-post-cursor))
+
+(defun rvf/test-image-digest (spec)
+  "Hash the actual image bytes described by SPEC."
+  (when (rvf/test-image-file-p spec)
+    (with-temp-buffer
+      (insert-file-contents-literally (plist-get (cdr spec) :file))
+      (secure-hash 'sha256 (current-buffer)))))
+
+(ert-deftest rvf/workflow-latex-edit-regenerates-preview ()
+  (let* ((file (make-temp-file "rvf-preview-edit-" nil ".org"))
+         (buffer (find-file-noselect file)))
+    (unwind-protect
+        (save-window-excursion
+          (switch-to-buffer buffer)
+          (should org-latex-preview-mode)
+          ;; Inline editing, not live side-by-side block rendering.
+          (insert "Before\n\nInline \\(x+1\\) after.\n")
+          (save-buffer)
+          (goto-char (point-min))
+          (org-latex-preview '(16))
+          (should (rvf/test-wait-for
+                   (lambda () (= 1 (length (rvf/test-preview-images)))) 120))
+          (let* ((ov (rvf/test-preview-overlay))
+                 (original (rvf/test-image-digest (overlay-get ov 'display))))
+            (should original)
+            ;; Enter the rendered fragment through the native cursor hooks.
+            (rvf/test-preview-command
+             (lambda () (goto-char (+ 3 (overlay-start ov)))))
+            (should (overlay-get ov 'org-view-text))
+            (should-not (overlay-get ov 'display))
+            ;; Edit the fragment in place, and then leave it. No explicit
+            ;; preview command is used after the initial rendering.
+            (rvf/test-preview-command
+             (lambda ()
+               (goto-char (+ 2 (overlay-start ov)))
+               (delete-char 1)
+               (insert "\\mathbb{Q}")))
+            (should (eq (overlay-get ov 'org-preview-state) 'modified))
+            (rvf/test-preview-command
+             (lambda () (goto-char (point-max))))
+            (should
+             (rvf/test-wait-for
+              (lambda ()
+                (let* ((current (rvf/test-preview-overlay))
+                       (image (and current (overlay-get current 'display)))
+                       (digest (rvf/test-image-digest image)))
+                  (and digest (not (equal digest original))
+                       (not (overlay-get current 'org-view-text))
+                       (not (overlay-get current 'help-echo)))))
+              120))
+            (should (string-search "\\(\\mathbb{Q}+1\\)" (buffer-string)))))
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer (set-buffer-modified-p nil))
+        (kill-buffer buffer))
+      (delete-file file))))
+
+(ert-deftest rvf/workflow-latex-beamer-setupfile-preview ()
+  (let* ((dir (make-temp-file "rvf-preview-beamer-" t))
+         (setup (expand-file-name "options.org" dir))
+         (file (expand-file-name "slides.org" dir)))
+    (unwind-protect
+        (progn
+          (with-temp-file setup
+            (insert "#+LATEX_CLASS: beamer\n"
+                    "#+LATEX_HEADER: \\usefonttheme{professionalfonts}\n"
+                    "#+LATEX_HEADER: \\setbeamertemplate{navigation symbols}{}\n"
+                    "#+LATEX_HEADER: \\setbeamerfont{title}{series=\\bfseries}\n"
+                    "#+LATEX_HEADER: \\setbeamercolor{title}{fg=blue}\n"
+                    "#+LATEX_HEADER: \\newcommand{\\PreviewFixture}{\\mathbb{Q}}\n"))
+          (with-temp-file file
+            (insert "#+setupfile: options.org\n\n"
+                    "A Beamer formula: \\(\\PreviewFixture\\).\n"))
+          (with-current-buffer (find-file-noselect file)
+            (goto-char (point-min))
+            (org-latex-preview '(16))
+            (should (rvf/test-wait-for
+                     (lambda () (= 1 (length (rvf/test-preview-images)))) 120))
+            (let ((ov (rvf/test-preview-overlay)))
+              (should (eq (plist-get (cdr (overlay-get ov 'org-preview-image)) :type)
+                          'svg))
+              (should-not (overlay-get ov 'help-echo)))))
+      (when-let* ((buffer (get-file-buffer file))) (kill-buffer buffer))
+      (delete-directory dir t))))
+
 (defun rvf/test-execute-named (name)
   (goto-char (point-min))
   (org-babel-goto-named-src-block name)
