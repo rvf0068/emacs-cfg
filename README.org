@@ -493,7 +493,9 @@ first real Jupyter evaluation. It prints =RVF BENCHMARK= lines in
 seconds. Each probe checks that the operation succeeded. No private
 configuration, notes, bibliography, credentials or remote Git
 operations are used. This target may take several minutes and is
-not part of the default regression suite.
+not part of the default regression suite. In GitHub Actions, manually
+run the Emacs regression workflow with =benchmark_startup= enabled to
+execute the same benchmark inside the CI dependency image.
 
 The warm processes reuse installed package files, not a running Emacs.
 Native compilation, operating-system caches and background work may
