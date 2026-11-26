@@ -75,6 +75,45 @@ kernelspecs and already running Jupyter/Eglot sessions are not restarted
 or silently redirected by this helper; choose the intended kernel and
 restart an existing language server when changing environments.
 
+** Eglot and project-local Python language servers
+
+Both Python major modes activate the project environment before requesting
+Eglot startup. If a project has a usable =.venv=, Eglot prefers its
+=bin/pylsp=; a missing project server does not trigger automatic startup.
+Outside an activated environment, Eglot uses =pylsp= on PATH.
+
+For a uv project that you want to edit with Eglot, one option is to add
+the server as a development dependency:
+
+#+begin_src sh
+cd ~/Python/pycliques-project
+uv add --dev python-lsp-server
+#+end_src
+
+This is optional and changes that project's dependency configuration.
+The Emacs configuration does not run uv or install a language server.
+After installation, revisit a Python file or run =M-x my/find-uv-venv=
+and then =M-x eglot=. Inspect resolution with
+=M-x rvf/describe-python-environment=.
+
+To opt out of automatic Eglot startup while keeping environment activation,
+set in =personal.org=:
+
+#+begin_src emacs-lisp
+(setq my-python-eglot-auto-start nil)
+#+end_src
+
+If you deliberately want a PATH-based server when the project has no
+=pylsp=, set =my-python-eglot-allow-global-server= to t instead.
+A PATH-based server may analyze a different Python environment.
+
+Eglot normally shares a server among Python buffers in the same project.
+A nested package with a different environment does not automatically
+get a separate Eglot session. To change the server executable or its
+environment, run =M-x eglot-shutdown= in the managed project, refresh
+the environment in the intended Python buffer, then run =M-x eglot=.
+This is distinct from restarting or selecting Jupyter kernels.
+
 ** Using pycliques-project from Jupyter blocks
 
 There are several ways to use the monorepo from Emacs. Choose whichever
