@@ -515,6 +515,26 @@ completion, and the Jupyter probe includes the first kernel evaluation.
 On your normal graphical Emacs, =M-x emacs-init-time= provides a
 complementary measurement with your actual personal settings.
 
+** Paired startup garbage-collection experiment
+
+To compare the ordinary startup threshold against a temporary 32 MiB
+threshold in the same prepared byte-compiled installation, run:
+
+#+begin_src sh
+RVF_BENCHMARK_GC_COMPARE=1 make benchmark-startup
+#+end_src
+
+This runs three pairs by default (six fresh Emacs processes), alternating
+the order of the two policies. =RVF_BENCHMARK_RUNS=1= requests one pair.
+The tuned policy raises the threshold only during configuration loading
+and straight transaction finalization, never lowers a higher threshold,
+and restores the original value before the first-use probes. Both policies
+measure one explicit post-startup garbage collection separately so that
+a delay merely moved out of initialization remains visible. Compare both
+startup alone and startup plus the explicit collection; compare first-use
+timings within the paired experiment, not against the unmodified benchmark.
+No everyday Emacs settings are changed by this experiment.
+
 * Regression tests
 
 The test suite uses a temporary home directory, copies the public configuration
