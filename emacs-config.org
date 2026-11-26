@@ -358,29 +358,11 @@ The =C-c a d= dashboard combines a seven-day agenda with open TODOs across confi
 
 *** LaTeX previews
 
-Org's built-in =org-latex-preview-mode= automatically toggles previews while editing and previews newly inserted fragments. The personal setting =my-latex-preview-scale= controls image resolution. The =dvisvgm= backend uses pdfLaTeX by default, enabling faster previews through precompilation. Org files can override the compiler with =#+LATEX_COMPILER=; LuaLaTeX and XeLaTeX do not support preview precompilation.
+Org's built-in =org-latex-preview-mode= automatically toggles previews while editing and previews newly inserted fragments. The personal setting =my-latex-preview-scale= controls image resolution. The =dvisvgm= backend uses pdfLaTeX by default, enabling faster previews through precompilation. Org files can override the compiler with =#+LATEX_COMPILER=; LuaLaTeX and XeLaTeX do not support preview precompilation. The helper in =lisp/latex-preview-config.el= applies the mathematical font and Beamer compatibility additions only once, even when this block is reevaluated. Native Org uses =org-latex-preview-cache= (normally =persist=), not the old =org-preview-latex-image-directory= setting. Existing cache settings are left unchanged.
 
 #+begin_src emacs-lisp
-(require 'org-latex-preview)
-(setq org-latex-preview-process-default 'dvisvgm
-      org-latex-preview-process-precompile t
-      org-preview-latex-image-directory "~/Documents/org-latex-previews/")
-(setf (plist-get org-latex-preview-appearance-options :scale) my-latex-preview-scale)
-;; Previews use an article class, but #+setupfile headers may contain beamer
-;; commands; stub them so the preview compiler doesn't abort.
-(setq org-latex-preview-preamble
-        (concat org-latex-preview-preamble
-                "\n\\usepackage{lxfonts}\n\\usepackage{amsmath}\n\\usepackage{amsfonts}"
-                "\n\\makeatletter"
-                "\n\\providecommand{\\usefonttheme}[2][]{}"
-                "\n\\providecommand{\\usebeamerfont}{\\@ifstar\\@gobble\\@gobble}"
-                "\n\\providecommand{\\usebeamercolor}[2][]{}"
-                "\n\\providecommand{\\usebeamertemplate}{\\@ifstar\\@gobble\\@gobble}"
-                "\n\\providecommand{\\setbeamertemplate}[2]{}"
-                "\n\\providecommand{\\setbeamerfont}[2]{}"
-                "\n\\providecommand{\\setbeamercolor}[2]{}"
-                "\n\\makeatother"))
-(add-hook 'org-mode-hook #'org-latex-preview-mode)
+(require 'latex-preview-config)
+(rvf/configure-latex-previews)
 #+end_src
 
 *** org-roam

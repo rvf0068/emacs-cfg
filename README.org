@@ -115,5 +115,7 @@ uv run make -C ~/emacsen/math-emacs test \
 
 GitHub Actions runs the suite on pushes and pull requests using Ubuntu 24.04.
 Use [[file:samples/workflow-test.org][the interactive test document]] for manual preview editing and
-PDF export checks on your usual Emacs version. Automated tests do not yet cover
-editing and regenerating previews, completion or PDF export.
+PDF export checks on your usual Emacs version. Automated tests now cover
+native LaTeX preview regeneration after editing and a Beamer setupfile;
+interactive completion, live side-by-side previews and PDF export still need
+manual checks.
