@@ -1,10 +1,16 @@
 name: Emacs regression
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 permissions:
   contents: read
+# A new commit makes an older PR run obsolete. Feature branches are tested
+# by pull_request, so pushes to them do not start a duplicate workflow.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   regression:
     runs-on: ubuntu-24.04
@@ -14,7 +20,7 @@ jobs:
       - name: Install graphical Emacs and native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y emacs-gtk xvfb xauth libzmq3-dev build-essential pkg-config libpoppler-glib-dev libpng-dev zlib1g-dev elpa-pdf-tools-server texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science dvisvgm latexmk biber aspell-en ripgrep
+          sudo apt-get install -y --no-install-recommends emacs-gtk xvfb xauth libzmq3-dev build-essential pkg-config libpoppler-glib-dev libpng-dev zlib1g-dev elpa-pdf-tools-server texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-science texlive-pictures lmodern cm-super-minimal dvisvgm latexmk biber aspell-en ripgrep
           emacs --version
           kpsewhich lxfonts.sty
           kpsewhich mylatexformat.ltx
@@ -24,7 +30,9 @@ jobs:
       - name: Install Python kernel and research dependencies
         run: |
           python3 -m venv "$RUNNER_TEMP/workflow-venv"
-          "$RUNNER_TEMP/workflow-venv/bin/python" -m pip install jupyter ipykernel matplotlib numpy networkx
+          "$RUNNER_TEMP/workflow-venv/bin/python" -m pip install jupyter-core jupyter-client ipykernel matplotlib numpy networkx
+          "$RUNNER_TEMP/workflow-venv/bin/jupyter" --version
+          "$RUNNER_TEMP/workflow-venv/bin/jupyter-kernelspec" --version
           echo "$RUNNER_TEMP/workflow-venv/bin" >> "$GITHUB_PATH"
       - name: Validate dependency diagnostics
         run: |
@@ -36,4 +44,4 @@ jobs:
           cat "$RUNNER_TEMP/doctor-error.log"
           grep -F "ERROR: Required executable not found: /nonexistent/emacs" "$RUNNER_TEMP/doctor-error.log"
       - name: Run real Org workflows and ERT regression tests
-        run: make test
+        run: time make test
