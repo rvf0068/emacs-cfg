@@ -533,7 +533,33 @@ measure one explicit post-startup garbage collection separately so that
 a delay merely moved out of initialization remains visible. Compare both
 startup alone and startup plus the explicit collection; compare first-use
 timings within the paired experiment, not against the unmodified benchmark.
-No everyday Emacs settings are changed by this experiment.
+The paired experiment overrides the production startup policy for both
+arms, so it remains a valid comparison after the optimization is adopted.
+
+** Adopted startup policy
+
+The Dell (Emacs 32.0.50) paired benchmark measured median warm startup
+of 1.715 s with the original threshold and 1.020 s with 32 MiB. Median
+GC time fell from 0.723 s to 0.079 s; the explicit collection after
+startup remained about 0.04 s. These are isolated byte-compiled timings,
+not a guarantee of the same gain in a private installation.
+
+The early initialization now raises the GC threshold to 32 MiB if it
+was lower, and restores the original value near the end of
+=after-init-hook=. It does not force an extra collection or introduce
+a recurring timer. If private configuration changes the threshold to a
+different value during initialization, that value is retained. To set a
+persistent threshold of exactly 32 MiB, set it in a later startup hook
+(e.g. =emacs-startup-hook=). To disable the optimization for a launch:
+
+#+begin_src sh
+RVF_STARTUP_GC=baseline emacs
+#+end_src
+
+The graphical regression harness explicitly restores the threshold
+because its manually loaded init does not execute the usual startup
+hooks. The ordinary benchmark uses the adopted policy, and the paired
+benchmark still measures the original and experimental policies.
 
 * Regression tests
 
