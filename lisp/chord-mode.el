@@ -23,13 +23,14 @@
 ;;; Code:
 
 (require 'generic)
+(require 'subr-x)
 
 ;;;###autoload
 (define-generic-mode 'chord-mode
    nil  ; comments
    (list "{soc}" "{eoc}")  ; keywords
    '(("\\(\\[[^]]*\\]\\)"       1 'font-lock-string-face)
-     ("^#.*" 1 'font-lock-comment-face)
+     ("^#.*" 0 'font-lock-comment-face)
      ("\\({subtitle[^}]*}\\|{st:[^}]*}\\)"         1 'font-lock-type-face)
      ("\\({title[^}]*}\\|{t:[^}]*}\\)"         1 'font-lock-keyword-face)
      ("\\({[^}]*}\\)"         1 'font-lock-variable-name-face)
@@ -58,39 +59,79 @@
   (insert "\\smallskip"))
 
 
-(defun chord-up-a-semitone ()
-  "Transports a Chordpro file half a tone up"
-  (interactive)
-  (goto-char (point-min))
-  (while (search-forward "[" nil t)
-    (cond
-     ((looking-at "A#") (progn (insert "B")  (delete-char 2)))
-     ((looking-at "Bb") (progn (insert "B")  (delete-char 2)))
-     ((looking-at "A")  (progn (insert "A#") (delete-char 1)))
-     ((looking-at "B")  (progn (insert "C")  (delete-char 1)))
-     ((looking-at "C#") (progn (insert "D")  (delete-char 2)))
-     ((looking-at "C")  (progn (insert "C#") (delete-char 1)))
-     ((looking-at "D#") (progn (insert "E")  (delete-char 2)))
-     ((looking-at "D")  (progn (insert "D#") (delete-char 1)))
-     ((looking-at "E")  (progn (insert "F")  (delete-char 1)))
-     ((looking-at "F#") (progn (insert "G")  (delete-char 2)))
-     ((looking-at "F")  (progn (insert "F#") (delete-char 1)))
-     ((looking-at "G#") (progn (insert "A")  (delete-char 2)))
-     ((looking-at "G")  (progn (insert "G#") (delete-char 1)))
-     ))
-  (goto-char (point-min))
-  )
+(defconst chord--pitch-classes
+  '(("C" . 0) ("B#" . 0) ("C#" . 1) ("Db" . 1)
+    ("D" . 2) ("D#" . 3) ("Eb" . 3) ("E" . 4) ("Fb" . 4)
+    ("F" . 5) ("E#" . 5) ("F#" . 6) ("Gb" . 6)
+    ("G" . 7) ("G#" . 8) ("Ab" . 8) ("A" . 9)
+    ("A#" . 10) ("Bb" . 10) ("B" . 11) ("Cb" . 11))
+  "Pitch classes of conventional single-accidental chord roots.")
+
+(defconst chord--sharp-names
+  ["C" "C#" "D" "D#" "E" "F" "F#" "G" "G#" "A" "A#" "B"]
+  "Output spelling, preserving the historical preference for sharps.")
+
+(defconst chord--quality-regexp
+  (concat "^\\(?:"
+          (regexp-opt '("maj" "min" "dim" "aug" "sus" "add" "omit"
+                        "no" "alt" "dom" "m" "M" "Δ" "ø" "°"))
+          "\\|[-0-9#b+()/,]\\)*$")
+  "Recognize conventional chord-quality notation.")
+
+(defun chord--transpose-note (note semitones)
+  "Transpose NOTE by SEMITONES, using the historical sharp spelling."
+  (aref chord--sharp-names
+        (mod (+ (cdr (assoc note chord--pitch-classes)) semitones) 12)))
+
+(defun chord--transpose-token (token semitones)
+  "Transpose a bracketed chord TOKEN, leaving its quality unchanged.
+Recognize a final slash bass but not a numeric extension such as 6/9.
+Return TOKEN unchanged for unrecognized chord symbols or annotations."
+  (save-match-data
+    (let ((case-fold-search nil))
+      (if (not (string-match "^\\([A-G][#b]?\\)\\(.*\\)$" token))
+          token
+        (let* ((root (match-string 1 token))
+               (quality (match-string 2 token))
+               bass)
+          (when (string-match "/\\([A-G][#b]?\\)$" quality)
+            (setq bass (match-string 1 quality)
+                  quality (substring quality 0 (match-beginning 0))))
+          (if (not (string-match-p chord--quality-regexp quality))
+              token
+            (concat (chord--transpose-note root semitones)
+                    quality
+                    (when bass
+                      (concat "/" (chord--transpose-note bass semitones))))))))))
 
 (defun chord-up (semitones)
-  "Transpose the current ChordPro buffer up by SEMITONES half steps."
+  "Transpose bracketed chords by SEMITONES, which may be negative.
+Preserve chord qualities, transpose slash basses, and leave comments
+and unrecognized bracketed annotations alone.  A whole octave is a
+no-op.  Operate on the accessible part of the buffer in one pass."
   (interactive "p")
-  (dotimes (_ semitones)
-    (chord-up-a-semitone)))
+  (unless (zerop (mod semitones 12))
+    (save-excursion
+      (goto-char (point-min))
+      (atomic-change-group
+        (while (re-search-forward "\\[\\([^][\n]+\\)\\]" nil t)
+          (unless (save-excursion
+                    (beginning-of-line)
+                    (looking-at-p "[ \t]*#"))
+            (let* ((token (match-string-no-properties 1))
+                   (transposed (chord--transpose-token token semitones)))
+              (unless (equal token transposed)
+                (replace-match transposed t t nil 1)))))))))
+
+(defun chord-up-a-semitone ()
+  "Transpose the accessible ChordPro buffer up by one semitone."
+  (interactive)
+  (chord-up 1))
 
 (defun chord-down-a-semitone ()
-  "Transports a Chordpro file half a tone down"
+  "Transpose the accessible ChordPro buffer down by one semitone."
   (interactive)
-  (chord-up 11))
+  (chord-up -1))
 
 (defun chord-create-ascii ()
   "Creates ascii chords"
