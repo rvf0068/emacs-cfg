@@ -46,6 +46,13 @@
                            (zerop (ert-stats-skipped stats))
                            (zerop (ert-stats-completed-unexpected stats)))
                       0 1)))))
+    ;; Preserve subprocess diagnostics when a preview fails.  Messages alone
+    ;; only report an exit code and cannot identify missing TeX dependencies.
+    (unless (zerop status)
+      (when-let* ((output (get-buffer "*Org Preview LaTeX Output*")))
+        (message "Org preview subprocess output:\n%s"
+                 (with-current-buffer output
+                   (buffer-substring-no-properties (point-min) (point-max))))))
     (when (get-buffer "*Messages*")
       (with-current-buffer "*Messages*"
         (write-region (point-min) (point-max) (getenv "RVF_TEST_LOG") nil 'silent)))
