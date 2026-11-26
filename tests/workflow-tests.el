@@ -19,6 +19,32 @@
       (should library)
       (should (file-in-directory-p library straight-dir)))))
 
+(ert-deftest rvf/workflow-personal-settings ()
+  (require 'citar)
+  (require 'org-roam)
+  (let* ((absent (equal (getenv "RVF_TEST_PERSONAL") "absent"))
+         (notes (if absent (rvf/local-data-path "notes/")
+                  (expand-file-name "notes/" "~")))
+         (library (if absent (rvf/local-data-path "library/")
+                    (expand-file-name "library/" "~")))
+         (bibliography (unless absent
+                         (list (expand-file-name "library/test.bib" "~")))))
+    (should (eq absent (not (file-exists-p
+                             (expand-file-name "personal.org" user-emacs-directory)))))
+    (should (equal my-notes-directory notes))
+    (should (equal my-library-path library))
+    (should (file-directory-p library))
+    (should (file-exists-p (expand-file-name "Inbox.org" notes)))
+    (should (equal org-roam-directory notes))
+    (should org-roam-db-autosync-mode)
+    (should (equal org-cite-global-bibliography bibliography))
+    (should (equal citar-bibliography bibliography))
+    (should (equal citar-library-paths (list library)))
+    (should (equal citar-notes-paths (list notes)))
+    (should (member (expand-file-name "Inbox.org" notes) org-agenda-files))
+    (when absent
+      (should (equal org-roam-db-location (rvf/local-data-path "org-roam.db"))))))
+
 (defun rvf/test-wait-for (predicate seconds)
   "Wait up to SECONDS for PREDICATE, servicing real process output."
   (let ((deadline (+ (float-time) seconds)))

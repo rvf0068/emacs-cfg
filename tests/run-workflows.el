@@ -1,6 +1,9 @@
 ;;; run-workflows.el --- Isolated graphical integration runner -*- lexical-binding: t; -*-
 (require 'cl-lib)
 (require 'ert)
+(require 'subr-x)
+(when-let* ((program (getenv "RVF_EPDFINFO")))
+  (setq pdf-info-epdfinfo-program program))
 (setq user-emacs-directory (file-name-as-directory (getenv "RVF_TEST_DIR"))
       user-init-file (expand-file-name "init.el" user-emacs-directory)
       message-log-max t
