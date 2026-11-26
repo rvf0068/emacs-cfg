@@ -54,20 +54,20 @@
            (t
             (load (expand-file-name "tests/workflow-tests.el" user-emacs-directory))
             (let* ((mode (getenv "RVF_TEST_MODE"))
-                 (selector (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
+                   (selector (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
                                "^rvf/workflow-\\(personal-settings\\|babel-initialization\\|jupyter-uv-workspace-python\\|latex-real-previews\\)$"
                              (pcase mode
                                ("latex" "^rvf/workflow-latex-")
                                ("jupyter" "^rvf/workflow-jupyter-")
                                (_ "^rvf/workflow-"))))
-                 (stats (ert-run-tests-batch selector)))
-            (setq status
-                  (if (and (> (ert-stats-total stats) 0)
-                           (= (ert-stats-completed-expected stats)
-                              (ert-stats-total stats))
-                           (zerop (ert-stats-skipped stats))
-                           (zerop (ert-stats-completed-unexpected stats)))
-                      0 1)))))))
+                   (stats (ert-run-tests-batch selector)))
+              (setq status
+                    (if (and (> (ert-stats-total stats) 0)
+                             (= (ert-stats-completed-expected stats)
+                                (ert-stats-total stats))
+                             (zerop (ert-stats-skipped stats))
+                             (zerop (ert-stats-completed-unexpected stats)))
+                        0 1)))))))
     ;; Preserve subprocess diagnostics when a preview fails.  Messages alone
     ;; only report an exit code and cannot identify missing TeX dependencies.
     (unless (zerop status)
