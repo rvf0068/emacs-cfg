@@ -202,7 +202,9 @@ For example, in =personal.org=:
 
 #+begin_src emacs-lisp
 (with-eval-after-load 'ob-jupyter
-  (defvar org-babel-default-header-args:jupyter-python nil)
+  (unless (boundp 'org-babel-default-header-args:jupyter-python)
+    (setq org-babel-default-header-args:jupyter-python
+          (copy-tree org-babel-default-header-args:jupyter)))
   (setf (alist-get :kernel org-babel-default-header-args:jupyter-python)
         "pycliques"))
 #+end_src

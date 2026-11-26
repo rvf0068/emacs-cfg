@@ -44,7 +44,7 @@ This is filesystem discovery, not a full parser of uv workspace membership."
   "Undo this helper's buffer-local activation without changing global values."
   (interactive)
   (dolist (entry rvf/uv--saved-settings)
-    (pcase-let ((list var local bound value) entry)
+    (cl-destructuring-bind (var local bound value) entry
       (if local
           (if bound (set (make-local-variable var) value)
             (makunbound (make-local-variable var)))
