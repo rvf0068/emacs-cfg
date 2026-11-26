@@ -7,14 +7,7 @@
 (require 'org-latex-preview)
 (require 'elfeed)
 
-(let ((config (expand-file-name "../emacs-config.org"
-                                (file-name-directory load-file-name))))
-  (with-temp-buffer
-    (insert-file-contents config)
-    (org-mode)
-    (org-babel-goto-named-src-block "elfeed-latex-previews")
-    (let ((body (nth 1 (org-babel-get-src-block-info 'light))))
-      (eval (read (concat "(progn\n" body "\n)")) t))))
+(require 'elfeed-latex)
 
 (defmacro my/elfeed-test-capture-previews (&rest body)
   "Run BODY with Org preview requests captured in `previews'."
@@ -141,5 +134,46 @@
                  (lambda (&rest _) (error "Preview failed"))))
         (should-error (my/elfeed-latex-preview-run)))
       (should-not my/elfeed-latex-preview-active))))
+
+(ert-deftest my/elfeed-latex-discards-closed-buffers ()
+  (my/elfeed-test-preview-queue
+    (let ((first (generate-new-buffer " *elfeed-closed-active*"))
+          (second (generate-new-buffer " *elfeed-closed-pending*"))
+          (third (generate-new-buffer " *elfeed-next*")))
+      (unwind-protect
+          (cl-letf (((symbol-function 'my/elfeed-latex-preview)
+                     (lambda (&rest _) '(job))))
+            (dolist (buffer (list first second third))
+              (with-current-buffer buffer (my/elfeed-latex-preview-queue)))
+            (my/elfeed-latex-preview-run)
+            (should (eq my/elfeed-latex-preview-active first))
+            (kill-buffer second)
+            (should (equal my/elfeed-latex-preview-pending (list third)))
+            (kill-buffer first)
+            (should-not my/elfeed-latex-preview-active)
+            (my/elfeed-latex-preview-run)
+            (should (eq my/elfeed-latex-preview-active third))
+            (my/elfeed-latex-preview-finished 0 nil (list :org-buffer first))
+            (should (eq my/elfeed-latex-preview-active third))
+            (my/elfeed-latex-preview-finished 0 nil (list :org-buffer third))
+            (should-not my/elfeed-latex-preview-active))
+        (dolist (buffer (list first second third))
+          (when (buffer-live-p buffer) (kill-buffer buffer)))))))
+
+(ert-deftest my/elfeed-latex-automatic-preview-is-optional ()
+  (my/elfeed-test-preview-queue
+    (with-temp-buffer
+      (insert "Math: \\(x+y\\)")
+      (let ((my-elfeed-latex-auto-preview nil))
+        (my/elfeed-latex-preview-queue)
+        (should-not my/elfeed-latex-preview-pending)
+        (my/elfeed-test-capture-previews
+          (my/elfeed-latex-preview)
+          (should (equal (cdar previews) '("\\(x+y\\)")))))
+      (my/elfeed-latex-preview-queue)
+      (let ((my-elfeed-latex-auto-preview nil))
+        (my/elfeed-latex-preview-run)
+        (should-not my/elfeed-latex-preview-pending)
+        (should-not my/elfeed-latex-preview-active)))))
 
 ;;; elfeed-latex-tests.el ends here

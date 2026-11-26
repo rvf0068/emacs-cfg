@@ -56,6 +56,54 @@ mode; its lock entry has been removed. If you still have a private declaration
 for it, remove that declaration before freezing again. This does not delete
 any existing local package clone.
 
+* Elfeed for mathematical literature
+
+Use =M-x elfeed= for RSS/Atom reading. The existing search and article
+previews use the Org LaTeX backend, including inline math with dollar
+delimiters and Org-style delimiters. Automatic redraws are coalesced;
+closing an entry removes it from the preview queue.
+
+Feed content is external input. For feeds whose content you do not
+trust, or when you prefer a lightweight reader, disable automatic
+LaTeX compilation in =personal.org=:
+
+#+begin_src emacs-lisp
+(setq my-elfeed-latex-auto-preview nil)
+#+end_src
+
+In this case you can still explicitly run =M-x my/elfeed-latex-preview=
+on a trusted entry. This is a convenience switch, not a TeX security
+sandbox.
+
+** Optional Org-based feed organization
+
+The already-pinned =elfeed-org= package is available on demand.
+If you already configure it privately, keep that configuration.
+Otherwise, create an Org file containing a tree tagged =elfeed=,
+with categories and feed links as child headings. For example
+(the URLs below are illustrative arXiv RSS endpoints):
+
+#+begin_src org
+,* Research feeds :elfeed:
+,** Mathematics :math:
+,*** https://rss.arxiv.org/rss/math.CO :combinatorics:
+,*** https://rss.arxiv.org/rss/math.AT :topology:
+,*** https://rss.arxiv.org/rss/math.AC :algebra:
+#+end_src
+
+Set =rmh-elfeed-org-files= in =personal.org= to the location of that
+file, then run =M-x elfeed-org= once per session before opening
+Elfeed. The package reads the file whenever Elfeed is opened; inherited
+tags can be used in search filters such as =@2-weeks-ago +unread
++combinatorics=. This optional integration is not enabled by default:
+native elfeed-org replaces the current feed list with the subscriptions
+from its Org files. No feeds are added to your configuration by this PR.
+
+The existing Citar and Org Roam commands remain the entry points for
+curating bibliography entries and literature notes. Elfeed is for
+discovery; a feed item is not automatically a verified bibliographic
+record.
+
 * Literature notes and PDFs
 
 Use =F7= (Citar) to find a reference and create or open its Org Roam
