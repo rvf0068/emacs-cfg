@@ -388,6 +388,7 @@ File-node titles should come only from the note itself, not from its =#+setupfil
   (org-roam-completion-everywhere t)
   :config
   (require 'org-roam-local-title)
+  (require 'literature-notes)
   (advice-add 'org-roam-db--file-title :override #'rvf/org-roam-db-local-file-title)
   ;; Keep a fresh-install index separate from the user's existing database.
   (when (rvf/default-notes-directory-p)
@@ -403,13 +404,18 @@ File-node titles should come only from the note itself, not from its =#+setupfil
            :unnarrowed t
            :immediate-finish t)
         ("r" "literature note" plain
-         "- tags ::\n- keywords :: \n\n* Org noter notes\n  :PROPERTIES:\n  :Custom_ID: ${citar-citekey}\n  :URL: \n  :AUTHOR: ${citar-author}\n  :NOTER_DOCUMENT: %(expand-file-name \"${citar-citekey}.pdf\" my-library-path)\n  :NOTER_PAGE:\n  :END:\n\n* ${citar-title}\n\n* dummy\n\n[[bibliographystyle:alpha]]\n[[bibliography:rvf.bib]]\n\n\n* COMMENT Local Variables\n\n# Local variables:\n# org-confirm-babel-evaluate: nil\n# eval: (org-babel-lob-ingest \"options.org\")\n# eval: (org-sbe filter)\n# End:\n"
+         "- tags ::\n- keywords :: \n\n* Org noter notes\n  :PROPERTIES:\n  :Custom_ID: ${citar-citekey}\n  :URL: \n  :AUTHOR: ${citar-author}\n  :NOTER_DOCUMENT: ${rvf/literature-note-document}\n  :NOTER_PAGE:\n  :END:\n\n* ${citar-title}\n\n${rvf/literature-note-footer}"
          :target
          (file+head
           "%(expand-file-name (or citar-org-roam-subdir \"\") org-roam-directory)/${citar-citekey}.org"
-          "#+title: ${note-title}\n#+setupfile: options.org\n")
+          "#+title: ${note-title}\n${rvf/literature-note-setup}")
          :unnarrowed t))))
 #+end_src
+
+The literature template uses Citar to resolve associated PDFs, retains the
+conventional citekey-based path for papers not yet downloaded, and includes
+an optional setup file only when present. Site-specific footer text can be
+configured privately; existing notes are not modified.
 
 *** org-noter
 

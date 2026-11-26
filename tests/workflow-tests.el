@@ -460,3 +460,48 @@ its processing-info plist."
     (should (eq diff-suffix
                 (transient-get-suffix
                  'magit-diff 'gptel-magit-diff-explain)))))
+
+(ert-deftest rvf/workflow-literature-note-resources ()
+  ;; Exercise Citar's real file field parser with an isolated bibliography.
+  ;; The fixture files are only used for path discovery, not PDF rendering.
+  (require 'citar)
+  (require 'org-roam-capture)
+  (let* ((dir (make-temp-file "rvf-literature-workflow-" t))
+         (default-directory (file-name-as-directory dir))
+         (my-library-path dir)
+         (citar-library-paths (list dir))
+         (bib (expand-file-name "fixture.bib" dir))
+         (pdf (expand-file-name "Article with spaces.pdf" dir))
+         (citar-bibliography (list bib))
+         (citar-file-variable "file")
+         (citar--entries nil)
+         (org-roam-capture--info '(:citar-citekey "rvf-fixture"
+                                   :citar-author "Example, A."
+                                   :citar-title "Example paper"
+                                   :note-title "Example paper, by A. Example"))
+         (org-roam-capture--node (org-roam-node-create :title "Example paper"))
+         (my-literature-note-setupfile "options.org")
+         (my-literature-note-extra "")
+         (template (assoc "r" org-roam-capture-templates)))
+    (unwind-protect
+        (progn
+          (with-temp-file pdf (insert "fixture"))
+          (with-temp-file bib
+            (insert "@article{rvf-fixture, author={Example, A.}, "
+                    "title={Example paper}, year={2026}, "
+                    "file={Article with spaces.pdf}}\n"))
+          (with-temp-buffer
+            (org-mode)
+            (should (equal (rvf/literature-note-pdf "rvf-fixture") pdf))
+            (let* ((org-capture-plist (list :buffer (current-buffer)))
+                   (org-store-link-plist nil)
+                   (body (org-roam-capture--fill-template (nth 3 template)))
+                   (head (org-roam-capture--fill-template
+                          (nth 2 (plist-get (nthcdr 4 template) :target)))))
+              (should (string-match-p (regexp-quote pdf) body))
+              (should (string-match-p "Custom_ID: rvf-fixture" body))
+              (should (string-match-p "Example paper" head))
+              (should-not (string-match-p "setupfile:" head))
+              (should-not (string-match-p "org-babel-lob-ingest" body))
+              (should-not (string-match-p "rvf.bib" body)))))
+      (delete-directory dir t))))
