@@ -155,4 +155,27 @@
              "diff" :stream nil :context 'fixture)
             '("diff" :stream nil :context fixture)))))
 
+(ert-deftest rvf/gptel-magit-install-once-is-idempotent ()
+  (let ((rvf/gptel-magit-installed-p nil)
+        (calls 0))
+    (cl-letf (((symbol-function 'gptel-magit-install)
+               (lambda () (cl-incf calls))))
+      (rvf/gptel-magit-install-once)
+      (rvf/gptel-magit-install-once)
+      (should rvf/gptel-magit-installed-p)
+      (should (= calls 1)))))
+
+(ert-deftest rvf/gptel-magit-install-can-retry-after-error ()
+  (let ((rvf/gptel-magit-installed-p nil)
+        (calls 0))
+    (cl-letf (((symbol-function 'gptel-magit-install)
+               (lambda ()
+                 (cl-incf calls)
+                 (when (= calls 1) (error "Fixture installation failure")))))
+      (should-error (rvf/gptel-magit-install-once))
+      (should-not rvf/gptel-magit-installed-p)
+      (rvf/gptel-magit-install-once)
+      (should rvf/gptel-magit-installed-p)
+      (should (= calls 2)))))
+
 ;;; gptel-magit-compat-tests.el ends here

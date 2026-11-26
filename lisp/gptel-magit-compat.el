@@ -89,5 +89,17 @@ Each invocation has its own accumulator; do not mutate caller options."
     (advice-add 'gptel-magit--request :around
                 #'rvf/gptel-magit-stream-request)))
 
+(defvar rvf/gptel-magit-installed-p nil
+  "Non-nil after installing the global GPTel-Magit bindings.")
+
+(declare-function gptel-magit-install "gptel-magit")
+
+(defun rvf/gptel-magit-install-once ()
+  "Install global GPTel-Magit bindings once, when Magit is first used.
+Leave the flag unset on errors so the next invocation can retry."
+  (unless rvf/gptel-magit-installed-p
+    (gptel-magit-install)
+    (setq rvf/gptel-magit-installed-p t)))
+
 (provide 'gptel-magit-compat)
 ;;; gptel-magit-compat.el ends here

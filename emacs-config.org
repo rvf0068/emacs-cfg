@@ -17,6 +17,7 @@ Here is a summary of the custom keybindings defined in this configuration.
 | =f2 r=       | =recentf=                  | Global               |
 | =super down= | =duplicate-line=           | Global               |
 | =C-c m=      | =magit-status=             | Global               |
+| =C-c M=      | =magit-list-repositories=  | Global               |
 | =C-c a=      | =org-agenda=               | Global               |
 | =C-c c=      | =org-capture=              | Global               |
 | =C-c g=      | =gptel=                    | Global               |
@@ -574,14 +575,21 @@ marginalia.el - Marginalia in the minibuffer
 *** magit
 
 [[https://magit.vc][Magit]] is a complete text-based user interface for Git inside Emacs.
+Use =C-c m= for the current repository, or =C-c M= for the native
+repository dashboard. Set =magit-repository-directories= in =personal.org=
+to specify local repositories or search roots with bounded depth. No
+directories are scanned at startup or added by the public configuration.
+See the README for optional dashboard columns and batch fetching.
+
 #+begin_src emacs-lisp
 (use-package magit
   :straight t
   :init
-  ;; Work around a void-variable error in magit-autorevert when magit is
-  ;; loaded after init (the globalized mode variable is not yet defined).
+  ;; Retain the late-load workaround until the original void-variable
+  ;; error can be reproduced with the pinned magit-autorevert initializer.
   (defvar magit-auto-revert-mode t)
-  :bind ("C-c m" . magit-status))
+  :bind (("C-c m" . magit-status)
+         ("C-c M" . magit-list-repositories)))
 #+end_src
 
 *** gptel
@@ -612,7 +620,8 @@ The same compatibility library requests curl streaming for gptel-magit
 the single complete response expected by the pinned gptel-magit. It also
 handles non-streaming responses, cancellation and errors, without
 changing ordinary GPTel requests. The existing model/backend settings
-and package pins are unchanged.
+and package pins are unchanged. Global GPTel-Magit bindings are installed
+once, on first use of Magit, rather than on every Magit buffer.
 
 #+begin_src emacs-lisp
 (require 'gptel-magit-compat)
@@ -622,12 +631,13 @@ and package pins are unchanged.
              :type git :host github :repo "ragnard/gptel-magit"
              :build (:not compile native-compile)
              :post-build (rvf/gptel-magit-fix-when-let))
+  :commands gptel-magit-install
   :init
   (rvf/gptel-magit-fix-when-let)
   :custom
   (gptel-magit-model 'gpt-6.1-sol)
   :hook
-  (magit-mode . gptel-magit-install))
+  (magit-mode . rvf/gptel-magit-install-once))
 #+end_src
 
 *** pdf-tools
