@@ -477,7 +477,7 @@ This section details the modern completion system composed of Vertico, Orderless
 
 *** consult
 
-[[https://github.com/minad/consult][Consult]] offers a suite of commands that enhance searching and navigation, such as =consult-line= and =consult-ripgrep=. A custom function, =bms/org-roam-rg-search=, is defined to search specifically within the Org notes directory (path set in =personal.org=).
+[[https://github.com/minad/consult][Consult]] offers a suite of commands that enhance searching and navigation, such as =consult-line= and =consult-ripgrep=. A custom function, =bms/org-roam-rg-search=, is defined in =lisp/notes-search.el= to search specifically within the Org notes directory (path set in =personal.org=). Use =F5 d= for a case-insensitive search of Org files (including =.org_archive= files) with Consult's live preview. It adds the search options locally through =consult-ripgrep-args=, preserving the normal =F5 r= search and its settings.
 
 #+begin_src emacs-lisp
 (use-package consult
@@ -487,14 +487,7 @@ This section details the modern completion system composed of Vertico, Orderless
   ("<f5> l" . consult-line)
   ("<f5> r" . consult-ripgrep)
   :init
-  ;;; https://org-roam.discourse.group/t/using-consult-ripgrep-with-org-roam-for-searching-notes/1226
-  (defun bms/org-roam-rg-search ()
-    "Search org-roam directory using consult-ripgrep. With live-preview."
-    (interactive)
-    (let ((consult-ripgrep-command
-	   "rg --null --ignore-case --type org --line-buffered --color=always --max-columns=500 --no-heading --line-number . -e ARG OPTS"))
-      ;; Note: 'my-notes-directory' is set in personal.org
-      (consult-ripgrep my-notes-directory))))
+  (autoload 'bms/org-roam-rg-search "notes-search" nil t))
 #+end_src
 
 *** embark

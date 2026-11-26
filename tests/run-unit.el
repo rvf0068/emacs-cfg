@@ -14,7 +14,7 @@
        (rvf/test-package-declarations
         (expand-file-name "emacs-config.org" user-emacs-directory))))
   (dolist (name '(org-roam elfeed embark citar citar-embark
-                  tex cdlatex smartparens math-delimiters yasnippet))
+                  tex cdlatex smartparens math-delimiters yasnippet consult))
     (straight-use-package (rvf/test-package-recipe name declarations))))
 (require 'use-package)
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
