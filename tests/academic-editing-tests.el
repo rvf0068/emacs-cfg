@@ -38,15 +38,17 @@
 (ert-deftest rvf/bibtex-year-first-autokey-missing-fields ()
   (with-temp-buffer
     (bibtex-mode)
-    (insert "@misc{old, title = {Clique Graphs}}\n")
+    (insert "@misc{old, year = {2024}, title = {Clique Graphs}}\n")
     (goto-char (point-min))
     (let ((bibtex-autokey-prefix-string "")
+          (bibtex-autokey-year-length 4)
+          (bibtex-autokey-year-title-separator "-")
           (bibtex-autokey-before-presentation-function nil)
           (bibtex-autokey-titlewords 'infty)
           (bibtex-autokey-titleword-length 'infty)
           (bibtex-autokey-titleword-separator "-")
           (bibtex-autokey-titleword-ignore nil))
-      (should (equal (rvf/bibtex-year-first-autokey) "clique-graphs")))))
+      (should (equal (rvf/bibtex-year-first-autokey) "2024-clique-graphs")))))
 
 (ert-deftest rvf/bibtex-year-first-advice-idempotent ()
   (let ((already (advice-member-p #'rvf/bibtex-year-first-autokey
