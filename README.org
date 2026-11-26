@@ -388,9 +388,44 @@ uv run make -C ~/emacsen/math-emacs test \
     EMACS=/opt/emacs-32-noble/bin/emacs
 #+end_src
 
-GitHub Actions runs the suite on pushes and pull requests using Ubuntu 24.04.
 Use [[file:samples/workflow-test.org][the interactive test document]] for manual preview editing and
 PDF export checks on your usual Emacs version. Automated tests now cover
 native LaTeX preview regeneration after editing and a Beamer setupfile;
 interactive completion, live side-by-side previews and PDF export still need
 manual checks.
+
+** CI dependency image
+
+GitHub Actions runs the full suite on pull requests, pushes to =main= and
+manual dispatches. The job uses the Ubuntu 24.04 image defined in
+=.github/ci/Dockerfile=, with graphical Emacs, the previously validated TeX
+dependency closure, native module dependencies and a Python kernel environment.
+The image is built only on a cache miss and stored as a compressed Docker
+image archive in GitHub Actions cache. The exact cache key includes the
+Dockerfile hash, runner OS/architecture and UTC calendar month so changes
+and periodic refreshes rebuild dependencies. A first run after merging or
+cache eviction may take longer; PR caches cannot populate the main branch
+cache. No container registry, external credentials or package publication
+are required. GitHub may evict caches; no cache is required for correctness.
+
+The regression still runs =make doctor=, the missing-executable diagnostic,
+and every test in =make test=. The container mounts the checkout read-only
+and runs as a non-root user. Its test home is created afresh by the existing
+runner; neither the configuration, personal settings, nor Emacs package
+builds are included in the cached image.
+
+On a machine with Docker, the equivalent full test run from a clean checkout
+is:
+
+#+begin_src sh
+docker build --pull -t emacs-regression:ci .github/ci
+docker run --rm --init \
+    --mount "type=bind,source=$PWD,target=/workspace,readonly" \
+    emacs-regression:ci make test EMACS=emacs UV_PROJECT=
+#+end_src
+
+The Docker route is optional for local testing. Ordinary Makefile targets
+and the uv-based setup above remain unchanged. To force a fresh image in
+CI, delete the corresponding cache in the repository's Actions cache
+settings, or edit the Dockerfile. Compare cache-hit runs with the earlier
+native-installation runs before judging performance.
