@@ -553,3 +553,32 @@ its processing-info plist."
           (with-current-buffer buffer (set-buffer-modified-p nil))
           (kill-buffer buffer)))
       (delete-directory dir t))))
+
+(ert-deftest rvf/workflow-elfeed-math-preview ()
+  ;; A local synthetic feed entry, with the actual Org preview backend.
+  (require 'elfeed-show)
+  (require 'elfeed-latex)
+  (let ((buffer (generate-new-buffer " *rvf-elfeed-math*"))
+        (my/elfeed-latex-preview-pending nil)
+        (my/elfeed-latex-preview-active nil)
+        (my/elfeed-latex-preview-timer nil)
+        (my-elfeed-latex-auto-preview t))
+    (unwind-protect
+        (with-current-buffer buffer
+          (elfeed-show-mode)
+          (let ((elfeed-show-refresh-function
+                 (lambda ()
+                   (let ((inhibit-read-only t))
+                     (erase-buffer)
+                     (insert "Synthetic abstract: \\(x_{37}^{2}+y_{41}^{3}\\).")))))
+            (cl-letf (((symbol-function 'my/elfeed-latex-preview-schedule) #'ignore))
+              (elfeed-show-refresh)
+              (should (memq buffer my/elfeed-latex-preview-pending))
+              (my/elfeed-latex-preview-run)
+              (should (rvf/test-wait-for
+                       (lambda ()
+                         (and (not my/elfeed-latex-preview-active)
+                              (rvf/test-preview-images)))
+                       30))
+              (should (= 1 (length (rvf/test-preview-images)))))))
+      (when (buffer-live-p buffer) (kill-buffer buffer)))))
