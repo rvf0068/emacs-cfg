@@ -66,9 +66,10 @@
         (goto-char (point-min))
         (search-forward "A")
         (math-shortcuts-mode (if enabled 1 -1))
-        (rvf/math-shortcuts-test-type "R")
-        (push (list (buffer-string) (point) org-table-may-need-update)
-              results)))
+        (let ((org-table-may-need-update nil))
+          (rvf/math-shortcuts-test-type "R")
+          (push (list (buffer-string) (point) org-table-may-need-update)
+                results))))
     (should (equal (car results) (cadr results)))))
 
 ;;; math-shortcuts-tests.el ends here
