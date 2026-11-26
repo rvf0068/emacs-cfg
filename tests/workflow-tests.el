@@ -149,6 +149,16 @@ invoke the two hooks which normally surround each editing command."
       (insert-file-contents-literally (plist-get (cdr spec) :file))
       (secure-hash 'sha256 (current-buffer)))))
 
+(defun rvf/test-preview-jobs-pending-p (buffer)
+  "Whether Org's asynchronous queue still contains work for BUFFER.
+The pinned Org implementation tracks active and queued tasks in
+these two lists.  Each task carries the originating Org buffer in
+its processing-info plist."
+  (cl-some (lambda (task)
+             (eq (plist-get (plist-get (cdr task) :info) :org-buffer)
+                 buffer))
+           (append org-async--stack org-async--wait-queue)))
+
 (ert-deftest rvf/workflow-latex-edit-regenerates-preview ()
   (let* ((file (make-temp-file "rvf-preview-edit-" nil ".org"))
          ;; Different formulas in the two startup scenarios ensure both
@@ -177,9 +187,14 @@ invoke the two hooks which normally surround each editing command."
           (should (rvf/test-wait-for
                    (lambda ()
                      (and finished
+                          (not (rvf/test-preview-jobs-pending-p buffer))
                           (= 1 (length (rvf/test-preview-images)))))
                    120))
-          (should (equal finished '(0)))
+          ;; More than one completion notification can be delivered by
+          ;; the async machinery.  Require successful completion and a
+          ;; drained queue, not a particular callback count.
+          (should (cl-every #'zerop finished))
+          (setq finished nil)
           (let* ((ov (rvf/test-preview-overlay))
                  (original (rvf/test-image-digest (overlay-get ov 'display))))
             (should original)
@@ -208,18 +223,20 @@ invoke the two hooks which normally surround each editing command."
                       (let* ((current (rvf/test-preview-overlay))
                              (image (and current (overlay-get current 'display)))
                              (digest (rvf/test-image-digest image)))
-                        (and (= (length finished) 2)
+                        (and finished
+                             (not (rvf/test-preview-jobs-pending-p buffer))
                              digest (not (equal digest original))
                              (not (overlay-get current 'org-view-text))
                              (not (overlay-get current 'help-echo)))))
                     120)))
               (unless regenerated
                 (let ((current (rvf/test-preview-overlay)))
-                  (message "Preview regeneration diagnostic: finished=%S original=%S properties=%S"
-                           finished original
+                  (message "Preview regeneration diagnostic: finished=%S pending=%S original=%S properties=%S"
+                           finished (rvf/test-preview-jobs-pending-p buffer)
+                           original
                            (and current (overlay-properties current)))))
               (should regenerated)
-              (should (equal finished '(0 0))))))
+              (should (cl-every #'zerop finished)))))
       (when (buffer-live-p buffer)
         (with-current-buffer buffer (set-buffer-modified-p nil))
         (kill-buffer buffer))
