@@ -74,7 +74,10 @@
         (should-not (featurep 'jupyter-compat)))
     (should (rvf/jupyter-available-p))
     (should (featurep 'ob-jupyter))
-    (should (featurep 'jupyter-compat))))
+    (should (featurep 'jupyter-compat))
+    (should (advice-member-p #'rvf/jupyter-get-client-compat 'jupyter-get-client))
+    (should (advice-member-p #'my-safe-jupyter-org-completion-at-point
+                             'jupyter-org-completion-at-point))))
 
 (defun rvf/test-wait-for (predicate seconds)
   "Wait up to SECONDS for PREDICATE, servicing real process output."
@@ -296,7 +299,7 @@ invoke the two hooks which normally surround each editing command."
             (insert "#+PROPERTY: header-args:jupyter-python :session rvf-dedicated-test :results replace"
                     (if configured "" " :kernel rvf-dedicated") "\n\n"
                     "#+name: interpreter\n#+begin_src jupyter-python\n"
-                    "import sys\nsys.executable\n#+end_src\n\n"
+                    "import os, sys\nassert sys.executable == os.environ['RVF_TEST_DEDICATED_PYTHON'], sys.executable\n1\n#+end_src\n\n"
                     "#+name: package\n#+begin_src jupyter-python\n"
                     "import rvf_kernel_fixture\nrvf_kernel_fixture.VALUE\n#+end_src\n"))
           (with-current-buffer (find-file-noselect file)
@@ -304,7 +307,7 @@ invoke the two hooks which normally surround each editing command."
             (should-not rvf/uv-environment)
             (rvf/test-execute-named "interpreter")
             (should (rvf/test-result-matches
-                     "interpreter" (concat "^: +" (regexp-quote python) "[ \t]*$")))
+                     "interpreter" "^: +1[ \t]*$"))
             (rvf/test-execute-named "package")
             (should (rvf/test-result-matches "package" "^: +12345[ \t]*$"))))
       (when-let* ((buffer (get-file-buffer file)))
@@ -320,7 +323,7 @@ invoke the two hooks which normally surround each editing command."
         (with-current-buffer (find-file-noselect file)
           (insert "#+PROPERTY: header-args:jupyter-python :session rvf-test :kernel rvf-regression :results replace\n\n"
                   "#+name: base-interpreter\n#+begin_src jupyter-python\n"
-                  "import sys\nsys.executable\n#+end_src\n\n"
+                  "import os, sys\nassert sys.executable == os.environ['RVF_TEST_BASE_PYTHON'], sys.executable\n1\n#+end_src\n\n"
                   "#+name: graph\n#+begin_src jupyter-python\n"
                   "import networkx as nx\nimport numpy as np\n"
                   "G = nx.octahedral_graph()\nG.number_of_nodes()\n#+end_src\n\n"
@@ -337,8 +340,7 @@ invoke the two hooks which normally surround each editing command."
           ;; Explicit kernel header must override a configured default.
           (rvf/test-execute-named "base-interpreter")
           (should (rvf/test-result-matches
-                   "base-interpreter"
-                   (concat "^: +" (regexp-quote (getenv "RVF_TEST_BASE_PYTHON")) "[ \t]*$")))
+                   "base-interpreter" "^: +1[ \t]*$"))
           (rvf/test-execute-named "graph")
           (should (rvf/test-result-matches "graph" "^: +6[ \t]*$"))
           (rvf/test-execute-named "reuse")
