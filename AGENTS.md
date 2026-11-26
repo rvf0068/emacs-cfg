@@ -4,7 +4,7 @@
 - Keep current package revisions during refactoring; make only explicitly justified compatibility pin corrections (such as the Org revision required for native previews). Retain elfeed-org, org-pomodoro, minions and modus-themes; do not reintroduce org-fragtog (superseded by native Org previews).
 - Preserve working functionality and existing keybindings, particularly Org, LaTeX previews, AUCTeX, Jupyter, Citar, Org Roam, and uv integration.
 - Keep substantial implementations and compatibility fixes in lisp/ with lexical binding and focused ERT tests. Prefer extending existing implementations; document upstream issues.
-- Use \( ... \) for inline math and \[ ... \] for display math in Org documents. Preserve existing label conventions.
+- Use \( ... \) for inline math and \[ ... \] for display math in Org documents. Preserve existing label prefixes. New mathematical Org snippets use only #+name:; retain compatibility with historical #+label: declarations.
 - Run make test after each configuration change. Real Org LaTeX preview generation and real Jupyter kernel execution with inline images must pass; never substitute mocked package-loading tests for these integration checks.
 - Use samples/workflow-test.org to check interactive preview editing and PDF export when changing these behaviors.
 - Do not claim a test passed if dependencies were unavailable or a test was skipped. Fix or explicitly report regressions before merging.

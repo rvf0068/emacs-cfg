@@ -6,8 +6,7 @@
 # condition: (not (org-table-p))
 # group: theorems
 # --
-#+name: thm:`(setq yas-text (my/org-snippet-get-unique-label "thm:"))`
-#+label: thm:`yas-text`
+#+name: thm:`(my/org-snippet-get-unique-label "thm:")`
 #+begin_theorem
 $0
 #+end_theorem

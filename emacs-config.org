@@ -252,7 +252,7 @@ This custom minor mode allows for quick insertion of standard math sets ($\mathb
 
 This section contains the configuration for [[https://orgmode.org][Org mode]], a powerful system for outlining, note-taking, project planning, and authoring.
 
-This configuration loads a custom helper file, =cross-refs.el=, which defines functions to enable a smart cross-referencing system. When the preceding word does not identify a type, =C-c r= offers all document labels. The completion list uses bounded previews and merges duplicate =#+name:= and =#+label:= declarations. Historical =pf:= and =prop:= labels remain discoverable alongside =prf:= and =pro:=, without changing any existing snippets.
+This configuration loads a custom helper file, =cross-refs.el=, which defines functions to enable a smart cross-referencing system. When the preceding word does not identify a type, =C-c r= offers all document labels. The completion list uses bounded previews and merges duplicate =#+name:= and =#+label:= declarations. Historical =pf:= and =prop:= labels remain discoverable alongside =prf:= and =pro:=, without changing existing documents. New mathematical snippets insert only =#+name:=, which is sufficient for both navigation and LaTeX export.
 - =my/org-insert-smart-ref= (bound to =C-c r=) intelligently guesses the type of reference to insert (e.g., `thm:`, `def:`) based on the preceding word.
 - This system works with a custom set of Yasnippet snippets (bound to =<f6> <key>=) that insert theorem-like environments (see =yasnippet= section).
 - The snippets use the helper function =my/org-snippet-get-unique-label= from =cross-refs.el= to prompt for a label and ensure it is not a duplicate before insertion.
@@ -558,9 +558,9 @@ The description is set to the file name without its extension."
 
 [[https://github.com/joaotavora/yasnippet][YASnippet]] is a template system for Emacs, used here to insert environments for academic writing.
 - This configuration is linked to the =cross-refs.el= helper library.
-- Custom snippets for `thm`, `def`, `lem`, `cor`, `pro`, `pf`, and `equ` are defined in the `~/snippets/org-mode` directory.
+- Custom snippets for =thm=, =def=, =lem=, =cor=, =pro=, =pf=, =equ=, =exa=, and =rem= are defined in the =snippets/org-mode= directory of this configuration.
 - These snippets are bound to =<f6> <key>= (e.g., =<f6> t= for `thm`).
-- When expanded, they call the function =my/org-snippet-get-unique-label= to prompt for a unique label, preventing duplicates.
+- When expanded, they call the function =my/org-snippet-get-unique-label= to prompt for a unique label, preventing duplicates. Each inserts a single =#+name:= declaration. Existing documents containing both =#+name:= and =#+label:= remain supported.
 
 #+begin_src emacs-lisp
 (use-package yasnippet

@@ -6,8 +6,7 @@
 # condition: (not (org-table-p))
 # group: theorems
 # --
-#+name: prf:`(setq yas-text (my/org-snippet-get-unique-label "prf:"))`
-#+label: prf:`yas-text`
+#+name: prf:`(my/org-snippet-get-unique-label "prf:")`
 #+begin_proof
 $0
 #+end_proof
