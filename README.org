@@ -104,6 +104,21 @@ curating bibliography entries and literature notes. Elfeed is for
 discovery; a feed item is not automatically a verified bibliographic
 record.
 
+* Bibliography editing and file links
+
+BibTeX key generation keeps the established =year-author-title= format,
+using the native BibTeX author, year and title extractors. The supported
+=infty= and nil option values select all names, full title words and no
+ignored title words. The native =bibtex-autokey-prefix-string= and
+=bibtex-autokey-before-presentation-function= options are honored if
+customized. Existing bibliography entries and citation keys are not
+rewritten. The year/date validation remains BibTeX's own.
+
+The Embark file action =L= inserts an Org file link with the file's
+basename (without extension) as its description. It now uses Org's
+native link formatter, including escaping of bracket characters in
+filenames, rather than manually assembling bracket syntax.
+
 * Literature notes and PDFs
 
 Use =F7= (Citar) to find a reference and create or open its Org Roam
