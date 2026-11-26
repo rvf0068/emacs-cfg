@@ -26,6 +26,7 @@ Here is a summary of the custom keybindings defined in this configuration.
 | =<f5> r=     | =consult-ripgrep=          | Global               |
 | =C-==        | =embark-act=               | Global               |
 | =f7=         | =citar-open=               | Global               |
+| =<f5> n=     | =org-noter=                | Global               |
 | =<f5> b=     | =citar-insert-bibtex=      | Global               |
 | =<f8> f=     | =org-roam-node-find=       | Global               |
 | =<f8> i=     | =org-roam-node-insert=     | Global               |
@@ -419,7 +420,9 @@ configured privately; existing notes are not modified.
 
 *** org-noter
 
-By default =C-M-.= is bound to =org-noter-sync-current-note=.
+Use =F5 n= in the Org Noter heading of a saved literature note or in an open PDF.
+Org Noter handles document selection and missing paths itself. By default
+=C-M-.= is bound to =org-noter-sync-current-note=.
 
 https://github.com/org-noter/org-noter
 
@@ -649,12 +652,17 @@ once, on first use of Magit, rather than on every Magit buffer.
 *** pdf-tools
 
 [[https://github.com/vedang/pdf-tools][PDF Tools]] is a replacement for DocView for PDF files, which renders pages on-demand and stores them in memory.
+A working native server is activated at startup; otherwise Emacs keeps its
+normal PDF viewer and reports the problem. Run =M-x pdf-tools-install= to
+install or rebuild the server explicitly. Set =my-pdf-tools-offer-install=
+to non-nil privately to retain the previous startup installation prompt.
 #+begin_src emacs-lisp
 (use-package pdf-tools
   :if window-system
   :straight t
   :config
-  (pdf-tools-install))
+  (require 'pdf-tools-setup)
+  (rvf/pdf-tools-initialize))
 #+end_src
 
 *** smartparens
