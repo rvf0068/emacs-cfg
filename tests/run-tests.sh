@@ -88,15 +88,16 @@ if [[ "$mode" == benchmark ]]; then
         exit 2
     fi
     benchmark_run() {
-        local phase="$1" log="$2" result=0
+        local phase="$1" log="$2" policy="${3:-}" result=0
         RVF_BENCHMARK_PHASE="$phase" RVF_TEST_LOG="$log" \
+            RVF_BENCHMARK_GC_POLICY="$policy" \
             timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash \
                 --load tests/run-workflows.el || result=$?
         if ((result)); then
             if [[ -f "$log" ]]; then cat "$log"; fi
             return "$result"
         fi
-        grep -E 'RVF (STARTUP|BENCHMARK)' "$log"
+        grep -E 'RVF (STARTUP|BENCHMARK|GC POLICY)' "$log"
         if [[ "$phase" == measure ]]; then
             # Do not silently describe a rebuild as a warm startup.
             if awk '/RVF STARTUP measure / {exit} /^Building / {found=1}
@@ -109,8 +110,17 @@ if [[ "$mode" == benchmark ]]; then
     echo "Benchmark: isolated package preparation (not a warm measurement)"
     benchmark_run warmup "$tmp/benchmark-warmup.log"
     for ((i=1; i<=runs; i++)); do
-        echo "Benchmark: warm process $i/$runs"
-        benchmark_run measure "$tmp/benchmark-$i.log"
+        if [[ "${RVF_BENCHMARK_GC_COMPARE:-0}" == 1 ]]; then
+            # Alternate the order to reduce systematic cache/order effects.
+            if ((i % 2)); then policies=(baseline tuned); else policies=(tuned baseline); fi
+            for policy in "${policies[@]}"; do
+                echo "Benchmark: warm GC pair $i/$runs ($policy)"
+                benchmark_run measure "$tmp/benchmark-$i-$policy.log" "$policy"
+            done
+        else
+            echo "Benchmark: warm process $i/$runs"
+            benchmark_run measure "$tmp/benchmark-$i.log"
+        fi
     done
     exit 0
 fi
