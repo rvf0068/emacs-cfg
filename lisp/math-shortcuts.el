@@ -1,7 +1,8 @@
 ;;; math-shortcuts.el --- Math shortcuts for LaTeX and Org mode -*- lexical-binding: t; -*-
 
-(require 'texmathp nil t) ; Try to load texmathp if available
-(require 'org nil t)      ; Try to load org if available
+(declare-function texmathp "texmathp")
+(declare-function org-inside-LaTeX-fragment-p "org")
+(defvar math-shortcuts-mode)
 
 (defun math-shortcuts--in-math-p ()
   "Check if point is in a math environment."
@@ -10,9 +11,20 @@
     (and (fboundp 'org-inside-LaTeX-fragment-p)
          (org-inside-LaTeX-fragment-p)))
    ((derived-mode-p 'TeX-mode)
-    (and (fboundp 'texmathp)
+    (and (or (fboundp 'texmathp) (require 'texmathp nil t))
          (texmathp)))
    (t nil)))
+
+(defun math-shortcuts--ordinary-insert (char)
+  "Invoke the usual binding of CHAR without the math shortcut override.
+In Org this preserves table handling, speed commands and insertion hooks.
+The explicit event also permits invoking a shortcut by its command name."
+  (let* ((math-shortcuts-mode nil)
+         (last-command-event char)
+         (binding (key-binding (vector char)))
+         (command (if (commandp binding) binding #'self-insert-command)))
+    (setq this-command command)
+    (call-interactively command)))
 
 (defun math-shortcuts--insert-mathbb (char)
   "Insert \\mathbb{CHAR} if in math mode, otherwise insert CHAR.
@@ -29,7 +41,7 @@ delete it and insert the plain CHAR instead."
               (delete-char (- len))
               (insert (char-to-string char)))
           (insert mathbb-str)))
-    (call-interactively #'self-insert-command)))
+    (math-shortcuts--ordinary-insert char)))
 
 (defvar math-shortcuts-mode-map (make-sparse-keymap)
   "Keymap for math-shortcuts-mode.")
@@ -55,7 +67,8 @@ delete it and insert the plain CHAR instead."
   "Minor mode to quickly insert \\mathbb characters in math mode.
 When enabled, pressing R, Q, C, Z, N inside a math environment
 inserts \\mathbb{R}, \\mathbb{Q}, etc. Otherwise, it inserts the
-character as normal."
+character through the ordinary key binding.  Press the same letter
+again immediately after its expansion to obtain a plain capital."
   :lighter " BB"
   :keymap math-shortcuts-mode-map)
 
