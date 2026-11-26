@@ -23,7 +23,6 @@
 ;;; Code:
 
 (require 'generic)
-(require 'subr-x)
 
 ;;;###autoload
 (define-generic-mode 'chord-mode
