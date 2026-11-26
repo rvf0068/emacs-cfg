@@ -18,7 +18,18 @@ cleanup() {
     for log in "$tmp/emacs.log" "$tmp/emacs-no-personal.log" "$tmp/emacs-missing-notes.log"; do
         if [[ -f "$log" ]]; then cat "$log"; fi
     done
-    rm -rf "$tmp"
+    # A child process may finish writing its temporary files just after
+    # Emacs exits. Retry only this private test directory, without hiding
+    # a genuine regression failure or an unsuccessful cleanup.
+    local attempt
+    for attempt in 1 2 3 4 5; do
+        if rm -rf -- "$tmp"; then
+            exit "$status"
+        fi
+        sleep 1
+    done
+    echo "ERROR: Could not clean isolated test directory: $tmp" >&2
+    if ((status == 0)); then status=1; fi
     exit "$status"
 }
 trap cleanup EXIT
@@ -86,6 +97,14 @@ if [[ "$mode" == benchmark ]]; then
             return "$result"
         fi
         grep -E 'RVF (STARTUP|BENCHMARK)' "$log"
+        if [[ "$phase" == measure ]]; then
+            # Do not silently describe a rebuild as a warm startup.
+            if awk '/RVF STARTUP measure / {exit} /^Building / {found=1}
+                    END {exit !found}' "$log"; then
+                echo "WARNING: Warm startup rebuilt packages; timing includes builds." >&2
+                awk '/RVF STARTUP measure / {exit} /^Building / {print}' "$log"
+            fi
+        fi
     }
     echo "Benchmark: isolated package preparation (not a warm measurement)"
     benchmark_run warmup "$tmp/benchmark-warmup.log"
