@@ -32,8 +32,12 @@
             (should (equal (rvf/uv-find-environment source) shared))
             (rvf/test-uv-fake-env package t)
             (should (equal (rvf/uv-find-environment source) shared))
-            (should (equal (rvf/uv-find-environment source)
-                           (rvf/test-uv-fake-env package)))
+            ;; Create the executable before searching.  Function arguments
+            ;; are evaluated left-to-right, so creating it inside the
+            ;; second argument of equal would search the old fixture.
+            (let ((local-env (rvf/test-uv-fake-env package)))
+              (should (file-executable-p (expand-file-name "bin/python" local-env)))
+              (should (equal (rvf/uv-find-environment source) local-env)))
             (delete-directory (expand-file-name ".venv" package) t)
             ;; A nested checkout must not accidentally inherit the parent env.
             (with-temp-file (expand-file-name ".git" package)
