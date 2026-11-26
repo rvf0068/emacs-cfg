@@ -25,27 +25,49 @@
         ;; record them, aborting the entire suite.
         (when (condition-case err
                   (progn
-                    (let ((early (expand-file-name "early-init.el" user-emacs-directory)))
-                      (when (file-exists-p early) (load early nil 'nomessage)))
-                    (load user-init-file nil 'nomessage)
-                    (load (expand-file-name "tests/workflow-tests.el" user-emacs-directory))
+                    (let ((start (float-time))
+                          (gc-start gcs-done)
+                          (gc-seconds-start gc-elapsed))
+                      (let ((early (expand-file-name "early-init.el" user-emacs-directory)))
+                        (when (file-exists-p early) (load early nil 'nomessage)))
+                      (load user-init-file nil 'nomessage)
+                      (message "RVF STARTUP %s %.3f s (GCs %d, GC %.3f s)"
+                               (or (getenv "RVF_BENCHMARK_PHASE")
+                                   (getenv "RVF_TEST_PERSONAL") "configured")
+                               (- (float-time) start)
+                               (- gcs-done gc-start)
+                               (- gc-elapsed gc-seconds-start)))
+                    (message "RVF STARTUP loaded features: %S"
+                             (cl-remove-if-not
+                              #'featurep '(org latex org-roam citar embark magit
+                                           gptel pdf-tools org-noter ob-jupyter
+                                           elfeed bibtex smartparens)))
                     t)
                 (error (message "Integration startup failed: %S" err) nil))
-          (let* ((mode (getenv "RVF_TEST_MODE"))
-                 (selector (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
+          (cond
+           ((equal (getenv "RVF_BENCHMARK_PHASE") "warmup")
+            (setq status 0))
+           ((equal (getenv "RVF_BENCHMARK_PHASE") "measure")
+            (load (expand-file-name "tests/startup-benchmark.el" user-emacs-directory))
+            (rvf/benchmark-first-use)
+            (setq status 0))
+           (t
+            (load (expand-file-name "tests/workflow-tests.el" user-emacs-directory))
+            (let* ((mode (getenv "RVF_TEST_MODE"))
+                   (selector (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
                                "^rvf/workflow-\\(personal-settings\\|babel-initialization\\|jupyter-uv-workspace-python\\|latex-real-previews\\)$"
                              (pcase mode
                                ("latex" "^rvf/workflow-latex-")
                                ("jupyter" "^rvf/workflow-jupyter-")
                                (_ "^rvf/workflow-"))))
-                 (stats (ert-run-tests-batch selector)))
-            (setq status
-                  (if (and (> (ert-stats-total stats) 0)
-                           (= (ert-stats-completed-expected stats)
-                              (ert-stats-total stats))
-                           (zerop (ert-stats-skipped stats))
-                           (zerop (ert-stats-completed-unexpected stats)))
-                      0 1)))))
+                   (stats (ert-run-tests-batch selector)))
+              (setq status
+                    (if (and (> (ert-stats-total stats) 0)
+                             (= (ert-stats-completed-expected stats)
+                                (ert-stats-total stats))
+                             (zerop (ert-stats-skipped stats))
+                             (zerop (ert-stats-completed-unexpected stats)))
+                        0 1)))))))
     ;; Preserve subprocess diagnostics when a preview fails.  Messages alone
     ;; only report an exit code and cannot identify missing TeX dependencies.
     (unless (zerop status)

@@ -466,6 +466,47 @@ are not transposed.
 The existing =chordpack= export commands and their keybindings remain
 unchanged and require that external program.
 
+* Startup performance measurements
+
+The ordinary graphical regression logs report =RVF STARTUP= with
+elapsed time, garbage collection count/time, and selected loaded
+features immediately after loading early-init.el and init.el. These
+measure configuration loading in the graphical test harness, not the
+complete wall time from launching Emacs to its first displayed frame.
+The first process can include package installation and builds; later
+processes reuse the prepared package tree.
+
+For a controlled comparison of two revisions run:
+
+#+begin_src sh
+make benchmark-startup
+# Or make a single warm measurement:
+RVF_BENCHMARK_RUNS=1 make benchmark-startup
+#+end_src
+
+The target uses the existing isolated HOME, pinned straight revisions,
+Xvfb and Jupyter fixtures. It prepares packages once, then starts three
+fresh Emacs processes by default, each measuring configuration load,
+the first Org and LaTeX file visits, Magit status on a local empty Git
+repository, a Citar query against a one-entry bibliography, and the
+first real Jupyter evaluation. It prints =RVF BENCHMARK= lines in
+seconds. Each probe checks that the operation succeeded. No private
+configuration, notes, bibliography, credentials or remote Git
+operations are used. This target may take several minutes and is
+not part of the default regression suite. In GitHub Actions, manually
+run the Emacs regression workflow with =benchmark_startup= enabled to
+execute the same benchmark inside the CI dependency image.
+
+The warm processes reuse installed package files, not a running Emacs.
+Native compilation, operating-system caches and background work may
+still affect timings. Compare medians across several runs under the
+same conditions. The first-file probes measure synchronous visiting
+and mode initialization, not completion of asynchronous previews;
+the Citar probe measures data retrieval rather than interactive
+completion, and the Jupyter probe includes the first kernel evaluation.
+On your normal graphical Emacs, =M-x emacs-init-time= provides a
+complementary measurement with your actual personal settings.
+
 * Regression tests
 
 The test suite uses a temporary home directory, copies the public configuration

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [[ $# -lt 2 || $# -gt 3 || ("${3:-}" != "" && "${3:-}" != --doctor) ]]; then
-    echo 'Usage: run-tests.sh {all|unit|latex|jupyter|workflows} EMACS [--doctor]' >&2
+    echo 'Usage: run-tests.sh {all|unit|latex|jupyter|workflows|benchmark} EMACS [--doctor]' >&2
     exit 2
 fi
 mode="$1"
-case "$mode" in all|unit|latex|jupyter|workflows) ;; *) echo "Unknown test mode: $mode" >&2; exit 2;; esac
+case "$mode" in all|unit|latex|jupyter|workflows|benchmark) ;; *) echo "Unknown test mode: $mode" >&2; exit 2;; esac
 root="$(cd "$(dirname "$0")/.." && pwd)"
 source "$root/tests/check-dependencies.sh"
 rvf_check_dependencies "$mode" "$2"
@@ -68,6 +68,33 @@ if [[ "$mode" != unit ]]; then
     python "$root/tests/create-dedicated-kernel.py" "$HOME/dedicated-kernel"
 fi
 cd "$RVF_TEST_DIR"
+if [[ "$mode" == benchmark ]]; then
+    # The first process prepares the same isolated package tree used by
+    # later processes.  The warm timings exclude this preparation.
+    runs="${RVF_BENCHMARK_RUNS:-3}"
+    if [[ ! "$runs" =~ ^[1-9][0-9]*$ ]]; then
+        echo "RVF_BENCHMARK_RUNS must be a positive integer" >&2
+        exit 2
+    fi
+    benchmark_run() {
+        local phase="$1" log="$2" result=0
+        RVF_BENCHMARK_PHASE="$phase" RVF_TEST_LOG="$log" \
+            timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash \
+                --load tests/run-workflows.el || result=$?
+        if ((result)); then
+            if [[ -f "$log" ]]; then cat "$log"; fi
+            return "$result"
+        fi
+        grep -E 'RVF (STARTUP|BENCHMARK)' "$log"
+    }
+    echo "Benchmark: isolated package preparation (not a warm measurement)"
+    benchmark_run warmup "$tmp/benchmark-warmup.log"
+    for ((i=1; i<=runs; i++)); do
+        echo "Benchmark: warm process $i/$runs"
+        benchmark_run measure "$tmp/benchmark-$i.log"
+    done
+    exit 0
+fi
 status=0
 if [[ "$mode" != unit ]]; then
     echo "Running graphical Org workflow tests..."
