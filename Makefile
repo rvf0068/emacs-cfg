@@ -5,7 +5,7 @@ UV_PROJECT ?=
 -include Makefile.local
 RUN_TESTS = $(if $(strip $(UV_PROJECT)),uv run --project "$(UV_PROJECT)" --,) bash tests/run-tests.sh
 
-.PHONY: doctor doctor-unit test test-unit test-latex test-jupyter test-workflows
+.PHONY: doctor doctor-unit test test-unit test-latex test-jupyter test-workflows benchmark-startup
 doctor:
 	$(RUN_TESTS) all "$(EMACS)" --doctor
 doctor-unit:
@@ -20,3 +20,6 @@ test-jupyter:
 	$(RUN_TESTS) jupyter "$(EMACS)"
 test-workflows:
 	$(RUN_TESTS) workflows "$(EMACS)"
+
+benchmark-startup:
+	$(RUN_TESTS) benchmark "$(EMACS)"
