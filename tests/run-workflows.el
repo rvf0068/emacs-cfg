@@ -1,6 +1,9 @@
 ;;; run-workflows.el --- Isolated graphical integration runner -*- lexical-binding: t; -*-
 (require 'cl-lib)
 (require 'ert)
+(require 'subr-x)
+(when-let* ((program (getenv "RVF_EPDFINFO")))
+  (setq pdf-info-epdfinfo-program program))
 (setq user-emacs-directory (file-name-as-directory (getenv "RVF_TEST_DIR"))
       user-init-file (expand-file-name "init.el" user-emacs-directory)
       message-log-max t
@@ -29,10 +32,12 @@
                     t)
                 (error (message "Integration startup failed: %S" err) nil))
           (let* ((mode (getenv "RVF_TEST_MODE"))
-                 (selector (pcase mode
-                             ("latex" "^rvf/workflow-latex-")
-                             ("jupyter" "^rvf/workflow-jupyter-")
-                             (_ "^rvf/workflow-")))
+                 (selector (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
+                               "^rvf/workflow-personal-settings$"
+                             (pcase mode
+                               ("latex" "^rvf/workflow-latex-")
+                               ("jupyter" "^rvf/workflow-jupyter-")
+                               (_ "^rvf/workflow-"))))
                  (stats (ert-run-tests-batch selector)))
             (setq status
                   (if (and (> (ert-stats-total stats) 0)

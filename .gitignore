@@ -3,6 +3,8 @@
 *~
 /ido.last
 /personal.*
+!/personal.example.org
+/local-data/
 /recentf
 straight/*
 !straight/versions/

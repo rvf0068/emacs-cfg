@@ -15,7 +15,9 @@ if [[ "$emacs" != /* ]]; then emacs="$(realpath "$emacs")"; fi
 tmp="$(mktemp -d)"
 cleanup() {
     status=$?
-    if [[ -f "$tmp/emacs.log" ]]; then cat "$tmp/emacs.log"; fi
+    for log in "$tmp/emacs.log" "$tmp/emacs-no-personal.log" "$tmp/emacs-missing-notes.log"; do
+        if [[ -f "$log" ]]; then cat "$log"; fi
+    done
     rm -rf "$tmp"
     exit "$status"
 }
@@ -37,9 +39,6 @@ cat > "$RVF_TEST_DIR/personal.org" <<'EOF'
 (setq my-notes-directory (expand-file-name "notes/" "~")
       my-library-path (expand-file-name "library/" "~")
       my-bibliography (expand-file-name "library/test.bib" "~"))
-(require 'subr-x)
-(when-let* ((program (getenv "RVF_EPDFINFO")))
-  (setq pdf-info-epdfinfo-program program))
 #+end_src
 EOF
 # Bootstrap the exact recorded straight revision.
@@ -59,6 +58,36 @@ status=0
 if [[ "$mode" != unit ]]; then
     echo "Running graphical Org workflow tests..."
     timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash --load tests/run-workflows.el || status=1
+    if [[ "$mode" == all || "$mode" == workflows ]]; then
+        echo "Running graphical startup and workflows without personal.org..."
+        # A second process reuses the pinned packages, not the configuration
+        # variables or database connection from the first process.
+        mv "$RVF_TEST_DIR/personal.org" "$tmp/personal.org"
+        rm -f "$RVF_TEST_DIR/personal.el"
+        RVF_TEST_PERSONAL=absent RVF_TEST_LOG="$tmp/emacs-no-personal.log" \
+            timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash --load tests/run-workflows.el || status=1
+        echo "Running graphical startup with an unavailable configured notes directory..."
+        cat > "$RVF_TEST_DIR/personal.org" <<'EOF'
+#+begin_src emacs-lisp
+(setq my-notes-directory (expand-file-name "unavailable-notes/" "~")
+      my-library-path (expand-file-name "unavailable-library/" "~"))
+#+end_src
+EOF
+        # Preserve the database from the first startup. Neither Org Roam nor
+        # its Citar integration may synchronize against a missing directory.
+        if [[ -f "$RVF_TEST_DIR/org-roam.db" ]]; then
+            cp "$RVF_TEST_DIR/org-roam.db" "$tmp/original-org-roam.db"
+        else
+            echo "ERROR: Configured startup did not create its Org Roam database" >&2
+            status=1
+        fi
+        RVF_TEST_PERSONAL=missing RVF_TEST_LOG="$tmp/emacs-missing-notes.log" \
+            timeout --kill-after=20s 20m xvfb-run -a "$emacs" -Q --no-splash --load tests/run-workflows.el || status=1
+        if [[ -f "$tmp/original-org-roam.db" ]] && ! cmp -s "$tmp/original-org-roam.db" "$RVF_TEST_DIR/org-roam.db"; then
+            echo "ERROR: Startup with missing notes modified the existing Org Roam database" >&2
+            status=1
+        fi
+    fi
 fi
 if [[ "$mode" == all || "$mode" == unit ]]; then
     echo "Running isolated ERT unit tests..."

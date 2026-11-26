@@ -3,8 +3,7 @@
 (require 'consult)
 (require 'subr-x)
 
-(defvar my-notes-directory nil
-  "Directory containing Org notes, normally set in personal.org.")
+(require 'personal-settings)
 
 ;;;###autoload
 (defun bms/org-roam-rg-search ()

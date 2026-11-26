@@ -1,0 +1,20 @@
+#+title: Example private Emacs settings
+
+Copy this file to =personal.org= in the Emacs configuration directory and
+adapt the settings to each machine. The real =personal.org= and its tangled
+Lisp file are ignored by Git. Do not put actual credentials here.
+
+#+begin_src emacs-lisp
+;; Omit any setting to use the public defaults. For external locations,
+;; create/mount the directories before starting Emacs.
+;; (setq my-notes-directory "~/Documents/notes/")
+;; (setq my-library-path "~/Documents/papers/")
+
+;; A single file (the original format) or a list of files:
+;; (setq my-bibliography "~/Documents/references.bib")
+;; (setq my-bibliography '("~/Documents/references.bib"
+;;                         "~/Documents/books.bib"))
+
+;; (setq my-latex-preview-scale 1.2)
+;; Put your existing private package and GPTel configuration here.
+#+end_src

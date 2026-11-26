@@ -42,13 +42,15 @@ Here is a summary of the custom keybindings defined in this configuration.
 
 ** Personal Settings
 
-Loads a separate =personal.org= file for private configurations (like API keys or machine-specific paths).
+Loads an optional =personal.org= file for private configuration (paths, model settings, or credentials). The defaults are prepared afterwards, so existing =setq= and =defvar= assignments still take precedence. Without private settings, notes and PDF files use isolated directories under =local-data/= and the global bibliography is empty. See =personal.example.org= for examples.
 
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
 (if (file-exists-p
      (expand-file-name "personal.org" user-emacs-directory))
     (org-babel-load-file (expand-file-name "personal.org" user-emacs-directory)))
+(require 'personal-settings)
+(rvf/prepare-personal-settings)
 #+end_src
 
 ** General Emacs Settings
@@ -282,14 +284,16 @@ The =C-c a d= dashboard combines a seven-day agenda with open TODOs across confi
   (require 'cross-refs)
 
   ;; GTD system and Inbox.org creation
-  ;; Note: 'my-notes-directory' is set in personal.org
-  (unless (file-exists-p
-           (expand-file-name "Inbox.org" my-notes-directory))
-    (write-region "" nil (expand-file-name "Inbox.org" my-notes-directory)))
+  ;; Do not create an Inbox or modify a database on a missing mount.
   (unless (boundp 'org-capture-templates)
     (setq org-capture-templates nil))
   (defun rvf/set-gtd ()
     "Set agenda and templates for GTD"
+    (unless (rvf/notes-directory-ready-p)
+      (user-error "Notes directory unavailable: %s" my-notes-directory))
+    (let ((inbox (expand-file-name "Inbox.org" my-notes-directory)))
+      (unless (file-exists-p inbox)
+        (write-region "" nil inbox nil 'silent nil 'excl)))
     (add-to-list 'org-agenda-files
                  (expand-file-name "Inbox.org" my-notes-directory))
     (add-to-list 'org-capture-templates
@@ -301,7 +305,9 @@ The =C-c a d= dashboard combines a seven-day agenda with open TODOs across confi
                  `("w" "web" entry
                    (file+headline ,(expand-file-name "Inbox.org" my-notes-directory) "Web")
                    "* %a\n\n%U\n%i%?")))
-  (rvf/set-gtd)
+  (if (rvf/notes-directory-ready-p)
+      (rvf/set-gtd)
+    (display-warning 'rvf-personal "Skipping Inbox setup: notes directory unavailable" :warning))
   ;; A compact review view: scheduled work for the next week and open TODOs
   ;; across the configured agenda files.
   (setq org-agenda-custom-commands
@@ -321,7 +327,7 @@ The =C-c a d= dashboard combines a seven-day agenda with open TODOs across confi
   (set-face-attribute 'org-document-title nil :height 1.75)
   :custom
   ;; Note: 'my-bibliography' is set in personal.org
-  (org-cite-global-bibliography `(,my-bibliography))
+  (org-cite-global-bibliography (rvf/bibliography-files))
   ;; LaTeX/PDF use biblatex's default style (via latexmk+biber); other
   ;; backends (HTML, Markdown, ...) keep org-cite's built-in "basic" style.
   (org-cite-export-processors
@@ -355,9 +361,6 @@ The =C-c a d= dashboard combines a seven-day agenda with open TODOs across confi
 Org's built-in =org-latex-preview-mode= automatically toggles previews while editing and previews newly inserted fragments. The personal setting =my-latex-preview-scale= controls image resolution. The =dvisvgm= backend uses pdfLaTeX by default, enabling faster previews through precompilation. Org files can override the compiler with =#+LATEX_COMPILER=; LuaLaTeX and XeLaTeX do not support preview precompilation.
 
 #+begin_src emacs-lisp
-(defvar my-latex-preview-scale 1
-  "Scale factor for LaTeX previews. Can be overridden in personal.org.")
-
 (require 'org-latex-preview)
 (setq org-latex-preview-process-default 'dvisvgm
       org-latex-preview-process-precompile t
@@ -403,7 +406,12 @@ File-node titles should come only from the note itself, not from its =#+setupfil
   :config
   (require 'org-roam-local-title)
   (advice-add 'org-roam-db--file-title :override #'rvf/org-roam-db-local-file-title)
-  (org-roam-db-autosync-mode)
+  ;; Keep a fresh-install index separate from the user's existing database.
+  (when (rvf/default-notes-directory-p)
+    (setq org-roam-db-location (rvf/local-data-path "org-roam.db")))
+  (if (rvf/notes-directory-ready-p)
+      (org-roam-db-autosync-mode 1)
+    (display-warning 'rvf-personal "Skipping Org Roam autosync: notes directory unavailable" :warning))
   (setq org-roam-capture-templates
         '(("d" "project" plain
            "\n* Goals\n%?\n* Tasks\n\n** TODO Add initial tasks\n\n* Dates\n\n"
@@ -838,7 +846,7 @@ The installed Elfeed version refreshes entry buffers through =elfeed-show-refres
   :custom
   ;; Note: 'my-bibliography', 'my-library-path', and 'my-notes-directory'
   ;; are all set in personal.org
-  (citar-bibliography my-bibliography)
+  (citar-bibliography (rvf/bibliography-files))
   (citar-library-paths `(,my-library-path))
   (citar-notes-paths `(,my-notes-directory)))
 #+end_src
@@ -868,7 +876,9 @@ another Citar command has been used. For example, =e= opens the BibTeX entry.
   :straight t
   :after (citar org-roam)
   :config
-  (citar-org-roam-mode)
+  ;; Enabling Citar's Org Roam source also synchronizes the database.
+  (when (rvf/notes-directory-ready-p)
+    (citar-org-roam-mode 1))
   (setq citar-org-roam-note-title-template "${title}, by ${author}")
   (setq citar-org-roam-capture-template-key "r"))
 #+end_src
