@@ -33,6 +33,16 @@
   (unless (file-regular-p (straight--build-cache-file))
     (error "Straight did not persist its build cache")))
 
+(defun rvf/test-prepare-zmq ()
+  "Ensure the actual native ZeroMQ module is loaded before kernel tests.
+The pinned zmq-load can return after an unsuccessful source build
+without signaling an error.  Detect that condition at its source."
+  (when (featurep 'ob-jupyter)
+    (require 'zmq)
+    (zmq-load)
+    (unless (and (featurep 'zmq-core) (boundp 'zmq-REQ))
+      (error "ZeroMQ native module did not load; inspect compilation diagnostics"))))
+
 (defvar rvf/benchmark-gc-policy
   (let ((policy (getenv "RVF_BENCHMARK_GC_POLICY")))
     (unless (or (null policy) (string-empty-p policy)) policy)))
@@ -75,6 +85,7 @@
                 (error (message "Integration startup failed: %S" err) nil))
           (cond
            ((equal (getenv "RVF_BENCHMARK_PHASE") "warmup")
+            (rvf/test-prepare-zmq)
             (setq status 0))
            ((equal (getenv "RVF_BENCHMARK_PHASE") "measure")
             (unless (featurep 'startup-benchmark)
@@ -88,6 +99,7 @@
             (rvf/benchmark-first-use)
             (setq status 0))
            (t
+            (rvf/test-prepare-zmq)
             (load (expand-file-name "tests/workflow-tests.el" user-emacs-directory))
             (let* ((mode (getenv "RVF_TEST_MODE"))
                    (selector (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
@@ -115,6 +127,10 @@
     ;; Preserve subprocess diagnostics when a preview fails.  Messages alone
     ;; only report an exit code and cannot identify missing TeX dependencies.
     (unless (zerop status)
+      (when-let* ((compilation (get-buffer "*compilation*")))
+        (message "Native module compilation output:\n%s"
+                 (with-current-buffer compilation
+                   (buffer-substring-no-properties (point-min) (point-max)))))
       (when-let* ((output (get-buffer "*Org Preview LaTeX Output*")))
         (message "Org preview subprocess output:\n%s"
                  (with-current-buffer output
