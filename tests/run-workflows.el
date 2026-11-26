@@ -2,6 +2,14 @@
 (require 'cl-lib)
 (require 'ert)
 (require 'subr-x)
+
+;; The benchmark measures a stable byte-compiled installation, not the
+;; CPU contention and temporary files of an asynchronous native build.
+;; Do not change native compilation for normal regression runs.
+(when (getenv "RVF_BENCHMARK_PHASE")
+  (setq straight-disable-native-compile t
+        native-comp-jit-compilation nil
+        native-comp-deferred-compilation nil))
 (when-let* ((program (getenv "RVF_EPDFINFO")))
   (setq pdf-info-epdfinfo-program program))
 (setq user-emacs-directory (file-name-as-directory (getenv "RVF_TEST_DIR"))
@@ -25,12 +33,20 @@
         ;; record them, aborting the entire suite.
         (when (condition-case err
                   (progn
+                    ;; These graphical processes load init.el outside the command
+                    ;; loop.  Unlike a normal interactive startup, they may
+                    ;; exit without ever running straight's post-command hook.
                     (let ((start (float-time))
                           (gc-start gcs-done)
                           (gc-seconds-start gc-elapsed))
                       (let ((early (expand-file-name "early-init.el" user-emacs-directory)))
                         (when (file-exists-p early) (load early nil 'nomessage)))
                       (load user-init-file nil 'nomessage)
+                      ;; Finalize the pinned straight transaction explicitly
+                      ;; so the next process can reuse its build metadata.
+                      (straight--transaction-finalize)
+                      (unless (file-regular-p (straight--build-cache-file))
+                        (error "Straight did not persist its build cache"))
                       (message "RVF STARTUP %s %.3f s (GCs %d, GC %.3f s)"
                                (or (getenv "RVF_BENCHMARK_PHASE")
                                    (getenv "RVF_TEST_PERSONAL") "configured")
@@ -68,6 +84,14 @@
                              (zerop (ert-stats-skipped stats))
                              (zerop (ert-stats-completed-unexpected stats)))
                         0 1)))))))
+    ;; First-use probes may register additional packages.  Save their
+    ;; metadata as well, but never conceal an unsuccessful regression.
+    (when (and (zerop status) (fboundp 'straight--transaction-finalize))
+      (condition-case err
+          (straight--transaction-finalize)
+        (error
+         (message "Straight transaction finalization failed: %S" err)
+         (setq status 1))))
     ;; Preserve subprocess diagnostics when a preview fails.  Messages alone
     ;; only report an exit code and cannot identify missing TeX dependencies.
     (unless (zerop status)
