@@ -876,7 +876,9 @@ another Citar command has been used. For example, =e= opens the BibTeX entry.
   :straight t
   :after (citar org-roam)
   :config
-  (citar-org-roam-mode)
+  ;; Enabling Citar's Org Roam source also synchronizes the database.
+  (when (rvf/notes-directory-ready-p)
+    (citar-org-roam-mode 1))
   (setq citar-org-roam-note-title-template "${title}, by ${author}")
   (setq citar-org-roam-capture-template-key "r"))
 #+end_src

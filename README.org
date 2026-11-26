@@ -31,7 +31,8 @@ Explicitly configured directories are never created automatically. If the
 notes directory is missing or inaccessible (for example, an unavailable
 external mount), startup warns and skips Inbox creation and Org Roam
 autosync, without substituting a different notes directory or clearing an
-existing database. Mount or create the configured directory and restart
+existing database. The Citar Org Roam integration is likewise not enabled
+when the notes directory is unavailable. Mount or create the configured directory and restart
 Emacs. Bibliography paths are not created or rewritten; files must exist
 before you use them for citation searches.
 
@@ -73,7 +74,9 @@ downloading packages. =make doctor-unit= checks only unit-suite prerequisites.
 All graphical targets initialize the full public configuration and currently
 require the same Python and TeX dependencies. The full suite and
 =make test-workflows= run the real graphical workflows both with temporary
-private settings and without =personal.org=.
+private settings and without =personal.org=. They also test startup with
+an unavailable explicitly configured notes directory and check that the
+original Org Roam database is unchanged.
 The graphical tests require graphical Emacs with SVG and dynamic module support,
 xvfb-run, xauth, GNU timeout, TeX Live (including lxfonts, AMS packages and
 mylatexformat), dvisvgm, and Python with Jupyter, IPykernel, NumPy, NetworkX

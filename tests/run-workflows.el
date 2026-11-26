@@ -32,10 +32,12 @@
                     t)
                 (error (message "Integration startup failed: %S" err) nil))
           (let* ((mode (getenv "RVF_TEST_MODE"))
-                 (selector (pcase mode
-                             ("latex" "^rvf/workflow-latex-")
-                             ("jupyter" "^rvf/workflow-jupyter-")
-                             (_ "^rvf/workflow-")))
+                 (selector (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
+                               "^rvf/workflow-personal-settings$"
+                             (pcase mode
+                               ("latex" "^rvf/workflow-latex-")
+                               ("jupyter" "^rvf/workflow-jupyter-")
+                               (_ "^rvf/workflow-"))))
                  (stats (ert-run-tests-batch selector)))
             (setq status
                   (if (and (> (ert-stats-total stats) 0)
