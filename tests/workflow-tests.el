@@ -473,6 +473,7 @@ its processing-info plist."
          (bib (expand-file-name "fixture.bib" dir))
          (pdf (expand-file-name "Article with spaces.pdf" dir))
          (citar-bibliography (list bib))
+         (citar-file-variable "file")
          (citar--entries nil)
          (org-roam-capture--info '(:citar-citekey "rvf-fixture"
                                    :citar-author "Example, A."
@@ -492,7 +493,9 @@ its processing-info plist."
           (with-temp-buffer
             (org-mode)
             (should (equal (rvf/literature-note-pdf "rvf-fixture") pdf))
-            (let* ((body (org-roam-capture--fill-template (nth 3 template)))
+            (let* ((org-capture-plist (list :buffer (current-buffer)))
+                   (org-store-link-plist nil)
+                   (body (org-roam-capture--fill-template (nth 3 template)))
                    (head (org-roam-capture--fill-template
                           (nth 2 (plist-get (nthcdr 4 template) :target)))))
               (should (string-match-p (regexp-quote pdf) body))
