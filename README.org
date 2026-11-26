@@ -56,6 +56,24 @@ mode; its lock entry has been removed. If you still have a private declaration
 for it, remove that declaration before freezing again. This does not delete
 any existing local package clone.
 
+* GPTel and GPTel-Magit
+
+Configure the GPTel backend and authentication privately in =personal.org=.
+The public configuration retains the existing GPTel-Magit model selection
+and the curl-streaming compatibility fix for ChatGPT Plus OAuth. No package
+pins or credentials are changed by this fix. GPTel-Magit expects one
+complete response; the compatibility library collects streamed chunks,
+handles the non-streaming fallback and discards incomplete responses
+after errors or cancellation.
+
+The normal GPTel command (=C-c g=) is unaffected. In Magit, the commit
+generation and diff explanation commands send Git diffs to the selected
+GPTel backend; review staged changes for credentials or confidential
+material before invoking them. The regression suite tests the compatibility
+callback protocol with synthetic responses, not a live authenticated request.
+After updating, manually check a small non-sensitive staged diff with
+the usual OAuth backend before relying on generated messages.
+
 * Python project environments
 
 For local Python and Org buffers, =uv-env.el= searches for the nearest
