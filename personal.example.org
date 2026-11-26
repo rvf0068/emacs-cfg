@@ -24,5 +24,9 @@ Lisp file are ignored by Git. Do not put actual credentials here.
 ;; (setq my-python-eglot-allow-global-server t)
 ;; Optional: local Git repository dashboard (directory . search depth).
 ;; (setq magit-repository-directories '(("~/Python/" . 1)))
+;; Optional literature-note customization:
+;; (setq my-literature-note-setupfile "options.org") ; only if readable
+;; (setq my-literature-note-setupfile nil) ; disable setup directive
+;; (setq my-literature-note-extra "* References\n#+print_bibliography:\n")
 ;; Put your existing private package and GPTel configuration here.
 #+end_src
