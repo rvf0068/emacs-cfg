@@ -24,14 +24,24 @@
         ((string-match-p "rebuild.*epdfinfo" prompt) t)
         (t (error "Unexpected installation prompt: %s" prompt))))
 
+(defvar rvf/startup-gc-enabled t)
+(defvar rvf/benchmark-gc-policy)
+
 (defun rvf/test-load-configuration ()
-  "Load the public configuration and persist straight's build metadata."
-  (let ((early (expand-file-name "early-init.el" user-emacs-directory)))
-    (when (file-exists-p early) (load early nil 'nomessage)))
-  (load user-init-file nil 'nomessage)
-  (straight--transaction-finalize)
-  (unless (file-regular-p (straight--build-cache-file))
-    (error "Straight did not persist its build cache")))
+  "Load the public configuration and persist straight's build metadata.
+For paired comparisons, let the experiment control the threshold.
+The harness does not run normal startup hooks after loading init.el."
+  (let ((rvf/startup-gc-enabled (not rvf/benchmark-gc-policy)))
+    (unwind-protect
+        (progn
+          (let ((early (expand-file-name "early-init.el" user-emacs-directory)))
+            (when (file-exists-p early) (load early nil 'nomessage)))
+          (load user-init-file nil 'nomessage)
+          (straight--transaction-finalize)
+          (unless (file-regular-p (straight--build-cache-file))
+            (error "Straight did not persist its build cache")))
+      (when (fboundp 'rvf/restore-startup-gc)
+        (rvf/restore-startup-gc)))))
 
 (defun rvf/test-prepare-zmq ()
   "Ensure the actual native ZeroMQ module is loaded before kernel tests.
