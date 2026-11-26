@@ -120,13 +120,15 @@ an explicit kernelspec or an existing session may select another Python."
   (interactive)
   (let ((report
          (format
-          "Directory: %s\nDetected .venv: %s\nActivated .venv: %s\nPython shell: %s\nBabel Python: %s\nVIRTUAL_ENV: %s\npython on exec-path: %s\npylsp on exec-path: %s\njupyter on exec-path: %s\n\nJupyter kernels are selected by kernelspec/session, not PATH alone.\n"
+          "Directory: %s\nDetected .venv: %s\nActivated .venv: %s\nPython shell: %s\nBabel Python: %s\nVIRTUAL_ENV: %s\npython on exec-path: %s\npylsp on exec-path: %s\njupyter on exec-path: %s\nConfigured Jupyter command: %s\nAvailable configured Jupyter: %s\n\nJupyter kernels are selected by kernelspec/session, not PATH alone.\n"
           default-directory (or (rvf/uv-find-environment) "none")
           (or rvf/uv-environment "none")
           (and (boundp 'python-shell-interpreter) python-shell-interpreter)
           (and (boundp 'org-babel-python-command) org-babel-python-command)
           (getenv "VIRTUAL_ENV") (executable-find "python")
-          (executable-find "pylsp") (executable-find "jupyter"))))
+          (executable-find "pylsp") (executable-find "jupyter")
+          (if (fboundp 'rvf/jupyter-command-name) (rvf/jupyter-command-name) "not configured")
+          (and (fboundp 'rvf/jupyter-available-p) (rvf/jupyter-available-p)))))
     (with-help-window "*Python environment*"
       (princ report))))
 

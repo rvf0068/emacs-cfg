@@ -60,6 +60,22 @@
     (when absent
       (should (equal org-roam-db-location (rvf/local-data-path "org-roam.db"))))))
 
+(ert-deftest rvf/workflow-babel-initialization ()
+  (should (featurep 'ob-python))
+  (should (featurep 'ob-latex))
+  (should (fboundp 'org-babel-execute:python))
+  (should (fboundp 'org-babel-execute:latex))
+  (should (alist-get 'python org-babel-load-languages))
+  (should (alist-get 'latex org-babel-load-languages))
+  (if (equal (getenv "RVF_TEST_PERSONAL") "missing")
+      (progn
+        (should-not (rvf/jupyter-available-p))
+        (should-not (featurep 'ob-jupyter))
+        (should-not (featurep 'jupyter-compat)))
+    (should (rvf/jupyter-available-p))
+    (should (featurep 'ob-jupyter))
+    (should (featurep 'jupyter-compat))))
+
 (defun rvf/test-wait-for (predicate seconds)
   "Wait up to SECONDS for PREDICATE, servicing real process output."
   (let ((deadline (+ (float-time) seconds)))
@@ -261,6 +277,41 @@ invoke the two hooks which normally surround each editing command."
         (kill-buffer buffer))
       (delete-directory root t))))
 
+(ert-deftest rvf/workflow-jupyter-dedicated-kernel ()
+  (let* ((configured (not (equal (getenv "RVF_TEST_PERSONAL") "absent")))
+         (dir (make-temp-file "rvf-dedicated-notes-" t))
+         (file (expand-file-name "research.org" dir))
+         (python (getenv "RVF_TEST_DEDICATED_PYTHON")))
+    (unwind-protect
+        (progn
+          (should (file-executable-p python))
+          (when configured
+            (should (equal jupyter-executable (getenv "RVF_TEST_JUPYTER")))
+            ;; Verify the configured CLI can be invoked without exec-path.
+            (let ((exec-path nil))
+              (should (stringp (jupyter-command "--version"))))
+            (should (equal (alist-get :kernel org-babel-default-header-args:jupyter-python)
+                           "rvf-dedicated")))
+          (with-temp-file file
+            (insert "#+PROPERTY: header-args:jupyter-python :session rvf-dedicated-test :results replace"
+                    (if configured "" " :kernel rvf-dedicated") "\n\n"
+                    "#+name: interpreter\n#+begin_src jupyter-python\n"
+                    "import sys\nsys.executable\n#+end_src\n\n"
+                    "#+name: package\n#+begin_src jupyter-python\n"
+                    "import rvf_kernel_fixture\nrvf_kernel_fixture.VALUE\n#+end_src\n"))
+          (with-current-buffer (find-file-noselect file)
+            ;; This is an ordinary notes directory, not a uv workspace.
+            (should-not rvf/uv-environment)
+            (rvf/test-execute-named "interpreter")
+            (should (rvf/test-result-matches
+                     "interpreter" (concat "^: +" (regexp-quote python) "[ \t]*$")))
+            (rvf/test-execute-named "package")
+            (should (rvf/test-result-matches "package" "^: +12345[ \t]*$"))))
+      (when-let* ((buffer (get-file-buffer file)))
+        (with-current-buffer buffer (set-buffer-modified-p nil))
+        (kill-buffer buffer))
+      (delete-directory dir t))))
+
 (ert-deftest rvf/workflow-jupyter-real-kernel ()
   (should (executable-find "jupyter"))
   (let* ((dir (make-temp-file "rvf-jupyter-" t))
@@ -268,6 +319,8 @@ invoke the two hooks which normally surround each editing command."
     (unwind-protect
         (with-current-buffer (find-file-noselect file)
           (insert "#+PROPERTY: header-args:jupyter-python :session rvf-test :kernel rvf-regression :results replace\n\n"
+                  "#+name: base-interpreter\n#+begin_src jupyter-python\n"
+                  "import sys\nsys.executable\n#+end_src\n\n"
                   "#+name: graph\n#+begin_src jupyter-python\n"
                   "import networkx as nx\nimport numpy as np\n"
                   "G = nx.octahedral_graph()\nG.number_of_nodes()\n#+end_src\n\n"
@@ -281,6 +334,11 @@ invoke the two hooks which normally surround each editing command."
           ;; ob-jupyter creates language aliases in org-mode-hook, not at load time.
           (should (featurep 'ob-jupyter))
           (should (fboundp 'org-babel-execute:jupyter-python))
+          ;; Explicit kernel header must override a configured default.
+          (rvf/test-execute-named "base-interpreter")
+          (should (rvf/test-result-matches
+                   "base-interpreter"
+                   (concat "^: +" (regexp-quote (getenv "RVF_TEST_BASE_PYTHON")) "[ \t]*$")))
           (rvf/test-execute-named "graph")
           (should (rvf/test-result-matches "graph" "^: +6[ \t]*$"))
           (rvf/test-execute-named "reuse")

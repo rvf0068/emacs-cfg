@@ -928,62 +928,40 @@ The helper searches upward for a usable project =.venv=, including shared enviro
 (add-hook 'org-mode-hook #'my/find-uv-venv)
 #+end_src
 
-*** jupyter
+*** Jupyter and ordinary Babel
 
-[[https://github.com/emacs-jupyter/jupyter][Jupyter]] integration for Emacs. A custom workaround is implemented to handle a login error. Also, to make it work in my computer, I had two manually delete the two copies of the file =emacs-zmq.so= inside the folder =/straight/build/zmq=. Then, the first time that one uses =emacs-jupyter=, one will be asked if one wants to search for a binary distribution. One should answer "no". This would case a compilation to happen locally.
+Ordinary Python and LaTeX source blocks are enabled independently of
+Jupyter. Other enabled Babel languages are preserved. The Jupyter
+integration uses the existing executable on PATH by default, or
+=my-jupyter-executable= in =personal.org= to select an executable
+directly. This does not modify PATH for other programs.
+The optional =my-jupyter-python-kernel= sets the default Python
+kernelspec; explicit document/block headers still take precedence.
 
 #+begin_src emacs-lisp
+(require 'jupyter-config)
+(rvf/enable-babel-languages 'latex 'python)
+
 (use-package jupyter
-  :if (executable-find "jupyter")
   :straight t
+  :if (rvf/jupyter-available-p)
+  :demand t
+  :init
+  (setq jupyter-executable (rvf/jupyter-command-name))
   :config
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((latex . t)
-     (python . t)
-     (jupyter . t))))
-
-;; see https://github.com/emacs-jupyter/jupyter/issues/500#issuecomment-2323985951
-(defun my-jupyter-api-http-request--ignore-login-error-a
-    (func url endpoint method &rest data)
-  (cond
-   ((member endpoint '("login"))
-    (ignore-error (jupyter-api-http-error)
-      (apply func url endpoint method data)))
-   (:else
-    (apply func url endpoint method data))))
-(advice-add
- #'jupyter-api-http-request
- :around #'my-jupyter-api-http-request--ignore-login-error-a)
-
-;; see https://github.com/emacs-jupyter/jupyter/issues/613
-(defun jupyter-get-client ()
-  "Return a monadic value that returns the client."
-  (jupyter-mlet* ((state  (jupyter-get-state))
-                 (client (jupyter-return (if (listp state) (car state) state))))
-    (cl-check-type client jupyter-kernel-client)
-    (jupyter-return client)))
-
-;; trying to make corfu happy inside blocks
-;; 1. Silence the completion function itself
-(defun my-safe-jupyter-org-completion-at-point (orig-fun &rest args)
-  "Catch and suppress errors in `jupyter-org-completion-at-point`."
-  (condition-case nil
-      (apply orig-fun args)
-    (error nil)))
-
-(advice-add 'jupyter-org-completion-at-point :around #'my-safe-jupyter-org-completion-at-point)
-
-;; 2. Avoid Jupyter cache lookups outside Org and suppress marker errors
-(defun my-safe-jupyter-org-set-src-block-cache (orig-fun &rest args)
-  "Run ORIG-FUN with ARGS only in Org, catching incomplete-block errors."
-  (when (derived-mode-p 'org-mode)
-    (condition-case nil
-        (apply orig-fun args)
-      (error nil))))
-
-(advice-add 'jupyter-org--set-src-block-cache :around #'my-safe-jupyter-org-set-src-block-cache)
+  (require 'jupyter-compat)
+  (rvf/enable-babel-languages 'jupyter)
+  (rvf/configure-jupyter-python-kernel))
 #+end_src
+
+The compatibility workarounds for the pinned emacs-jupyter revision
+are isolated in =lisp/jupyter-compat.el=. The known macro-definition
+ordering problem in issue #613 is fixed upstream but not in this pin;
+the HTTP login and completion/cache workarounds are also retained until
+their affected workflows can be tested. For the ZeroMQ module, if an
+old compiled module is incompatible with a new Emacs version, rebuild
+it locally (prefer declining an incompatible prebuilt binary).
+See the README for both uv launch and named kernelspec workflows.
 
 *** ox-ipynb
 

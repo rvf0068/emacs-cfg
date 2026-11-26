@@ -16,5 +16,8 @@ Lisp file are ignored by Git. Do not put actual credentials here.
 ;;                         "~/Documents/books.bib"))
 
 ;; (setq my-latex-preview-scale 1.2)
+;; Optional: use Jupyter without starting Emacs via uv.
+;; (setq my-jupyter-executable "~/Python/pycliques-project/.venv/bin/jupyter")
+;; (setq my-jupyter-python-kernel "pycliques")
 ;; Put your existing private package and GPTel configuration here.
 #+end_src

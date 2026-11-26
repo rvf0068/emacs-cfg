@@ -12,6 +12,11 @@
 (defvar my-latex-preview-scale 1
   "Scale factor for Org LaTeX previews.")
 
+(defvar my-jupyter-executable nil
+  "Optional Jupyter command or absolute executable path; nil uses upstream discovery.")
+(defvar my-jupyter-python-kernel nil
+  "Optional default named Jupyter Python kernel; nil preserves upstream defaults.")
+
 (defun rvf/local-data-path (name)
   "Return NAME inside this installation's private local-data directory."
   (expand-file-name name (expand-file-name "local-data/" user-emacs-directory)))
