@@ -44,6 +44,8 @@ def save(repos, cache, locked):
             url = git(src, "remote", "get-url", "origin")
             if not public_url(url) or git(src, "rev-parse", "HEAD") != commit:
                 continue
+            if (src / ".git" / "objects" / "info" / "alternates").exists():
+                continue  # Never cache references to another object directory.
             if git(src, "ls-tree", "--name-only", "HEAD", ".gitmodules"):
                 continue  # Let straight initialize submodules normally.
             with tempfile.TemporaryDirectory(dir=cache) as tmp:
