@@ -34,7 +34,7 @@
     (error "Straight did not persist its build cache")))
 
 (defvar rvf/benchmark-gc-policy
-  (let ((policy rvf/benchmark-gc-policy))
+  (let ((policy (getenv "RVF_BENCHMARK_GC_POLICY")))
     (unless (or (null policy) (string-empty-p policy)) policy)))
 
 (when rvf/benchmark-gc-policy
